@@ -62,6 +62,7 @@ sp500_tickers = ["MMM", "ABT", "ABBV", "ABMD", "ACN", "ADBE", "AMD", "AAP", "AES
 "WHR", "WMB",  "WYNN", "XEL", "XRX", "XYL", "YUM", "ZBRA",
 "ZBH", "ZION", "ZTS"
 ]
+
 sp500 = yf.download(sp500_tickers,period = '62mo', interval = "1wk", )
 sp500.drop(["Open", "High", "Low", "Close", "Volume"], axis = 1, inplace = True)
 sp500_pct = sp500.pct_change().fillna(0)
@@ -93,7 +94,7 @@ ticker_list2 =    [
 ticker_list_Fav = ['PG', 'MO', 'EXC', 'AMAT', 'T', 'GOOGL', 'BAC', 'WFC', 'MA', 'GOOG', 'META', 'CAT', 'AMGN', 'TJX', 'MS', 'BKNG', 'PGR', 'ETN', 'NET', 'HD']
 
 ticker_list3 = ["pypl", 'LLY', "NVDA", "TGT", "FANG"]
-for tick in ticker_list:
+for tick in ['AIG']:
     Ticker = tick
     data_new = yf.Ticker(Ticker).history(period = '31mo', interval ='1wk', auto_adjust = False)
     data_old = yf.Ticker(Ticker).history(period = '62mo', interval ='1wk', auto_adjust = False)
@@ -117,6 +118,9 @@ for tick in ticker_list:
         def Cal(data3):
             data3['Dividends'] = data3['Dividends']/data3['Adj Close']
             df = data3.copy()
+            #Volatility
+            df['volatility'] = df['Adj Close'].rolling(window = 12, min_periods = 12).std()
+            
             df['dir'] = (df['Adj Close'].shift(-K) - df['Adj Close']) / df['Adj Close']
             #BOV
             dof = np.sign(df['Adj Close'] - df['Adj Close'].shift(1))
@@ -145,8 +149,8 @@ for tick in ticker_list:
             df['RC1'] = High_cal(0.786)
             
             #Boolinger
-            df['SMA'] = df['Adj Close'].rolling(window = 40, min_periods = 40).mean()
-            df['STD'] = df['Adj Close'].rolling(window = 40, min_periods = 40).std()
+            df['SMA'] = df['Adj Close'].rolling(window = 20, min_periods = 20).mean()
+            df['STD'] = df['Adj Close'].rolling(window = 20, min_periods = 20).std()
             df['LBol'] = df['SMA'] - (2* df['STD'])
             df['HBol'] = df['SMA'] + (2* df['STD'])
             df['PLbol'] = ((df['Adj Close'] - df['LBol']) / df['LBol']) 
@@ -172,7 +176,7 @@ for tick in ticker_list:
 
             df['kumo'] = senkou_span_a - senkou_span_b
             df['kijun_tenkan'] = tenkan_sen - kijun_sen
-            ema12 = df['Adj Close'].ewm(span = 13,adjust=False, min_periods = 12).mean()
+            ema12 = df['Adj Close'].ewm(span = 12,adjust=False, min_periods = 12).mean()
             ema26 = df['Adj Close'].ewm(span = 26,adjust=False, min_periods = 26).mean()
             MACD = ema12 - ema26
             df['MACD'] = MACD
