@@ -11,56 +11,48 @@ import time
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import make_scorer, f1_score
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.ensemble import RandomForestClassifier
 import warnings
 st =  time.time()
 
-sp500_tickers = ["MMM", "ABT", "ABBV", "ABMD", "ACN", "ADBE", "AMD", "AAP", "AES",
-    "AFL", "A", "APD", "AKAM", "ALK", "ALB", "ARE", "ALGN", "ALLE",
-    "LNT", "ALL", "GOOGL", "GOOG", "MO", "AMZN", "AMCR", "AEE", "AAL", "AEP",
-    "AXP", "AIG", "AMT", "AWK", "AMP", "AME", "AMGN", "APH", "ADI",
-    "ANSS",  "AON", "AOS", "APA", "AAPL", "AMAT", "APTV", "ADM", "ANET",
-    "AJG", "AIZ", "T", "ATO", "ADSK", "ADP", "AZO", "AVB", "AVY", "BKR",
-    "BAC", "BK", "BAX", "BDX", "BBY", "BIO", "BIIB", "BLK", "BA",
-    "BKNG", "BWA", "BXP", "BSX", "BMY", "AVGO", "BR", "CHRW",
-    "CDNS", "CZR", "CPB", "COF", "CAH", "KMX", "CCL", "CARR", "CTLT", "CAT",
-    "CBOE", "CBRE", "CDW", "CE", "CNC", "CNP", "CF", "SCHW", "CHTR",
-    "CVX", "CMG", "CB", "CHD", "CI", "CINF", "CTAS", "CSCO", "C", "CFG",
-    "CLX", "CME", "CMS", "KO", "CTSH", "CL", "CMCSA", "CMA", "CAG",  "COP",
-    "ED", "STZ", "COO", "CPRT", "GLW", "CTVA", "COST", "CCI", "CSX", "CMI", "CVS",
-    "DHI", "DHR", "DRI", "DVA", "DE", "DAL", "XRAY", "DVN", "DXCM", "FANG", "DLR",
-    "DFS",  "DISH", "DG", "DLTR", "D", "DPZ", "DOV", "DOW", "DTE",
-    "DUK", "DD", "DXC", "EMN", "ETN", "EBAY", "ECL", "EIX", "EW", "EA",
-    "EMR", "ENPH", "ETR", "EOG", "EFX", "EQIX", "EQR", "ESS", "EL", "ETSY", "EVRG",
-    "ES", "EXC", "EXPE", "EXPD", "EXR", "XOM", "FFIV", "FAST", "FRT",
-    "FDX", "FIS", "FITB", "FE",  "FLT",  "FLS", "FMC", "F",
-    "FTNT", "FTV", "FOXA", "FOX", "BEN", "FCX", "GPS", "GRMN", "IT", "GNRC",
-    "GD", "GE", "GIS", "GM", "GPC", "GILD", "GL", "GPN", "GS", "GWW", "HAL", "HBI",
-    "HIG", "HAS", "HCA", "HOLX", "HD", "HON", "HRL", "HST", "HWM", "HPQ", "HUM",
-    "HBAN", "HII", "IEX", "IDXX", "ITW", "ILMN", "INCY", "IR", "INTC",
-    "ICE", "IBM", "IP", "IPG", "IFF", "INTU", "ISRG", "IVZ", "IPGP", "IQV", "IRM",
-    "JKHY", "J", "JBHT", "SJM", "JNJ", "JCI", "JPM", "JNPR", "K", "KEY",
-    "KEYS", "KMB", "KIM", "KMI", "KLAC", "KHC", "KR", "LHX", "LH", "LRCX",
-    "LW", "LVS", "LEG", "LDOS", "LEN", "LLY", "LNC", "LIN", "LYV", "LKQ", "LMT",
-    "L", "LOW", "LUMN", "LYB", "MTB", "MRO", "MPC", "MKTX", "MAR", "MMC", "MLM",
-    "MAS", "MA", "MKC", "MCD", "MCK", "MDT", "MRK", "MET", "MTD", "MGM",
-    "MCHP", "MU", "MSFT", "MAA", "MHK", "TAP", "MDLZ", "MPWR", "MNST", "MCO",
-    "MS", "MOS", "MSI", "MSCI", "NDAQ", "NTAP", "NFLX", "NWL", "NEM", "NWSA",
-    "NWS", "NEE", "NKE", "NI", "NSC", "NTRS", "NOC", "NCLH",
-    "NOV", "NRG", "NUE", "NVDA", "NVR", "NXPI", "ORLY", "OXY", "ODFL", "OMC",
-    "OKE", "ORCL", "OTIS", "PCAR", "PKG", "PH", "PAYX", "PAYC", "PYPL", "PENN",
-    "PNR", "PEP", "PRGO", "PFE", "PM", "PSX", "PNW", "PXD", "PNC",
-    "POOL", "PPG", "PPL", "PFG", "PG", "PGR", "PLD", "PRU", "PTC", "PEG", "PSA",
-    "PHM", "PVH", "QRVO", "PWR", "QCOM","DGX", "RL", "RJF", "RTX", "O", "REG", "REGN", "RF", "RSG", "RMD", "RHI", "ROK",
-"ROL", "ROP", "ROST", "RCL", "SPGI", "CRM", "SBAC", "SLB", "STX", "SEE", "SRE",
-"NOW", "SHW", "SPG", "SWKS", "SNA", "SO", "LUV", "SWK", "SBUX", "STT", "STE",
-"SYK", "SYF", "SNPS", "SYY", "TMUS", "TROW", "TTWO", "TPR", "TGT", "TEL",
-"TDY", "TFX", "TER", "TSLA", "TXN", "TXT", "TMO", "TJX", "TSCO", "TT", "TDG",
-"TRV", "TRMB", "TFC", "TYL", "TSN", "UDR", "ULTA", "USB", "UAA", "UA",
-"UNP", "UAL", "UNH", "UPS", "URI", "UHS", "UNM", "VLO", "VTR", "VRSN",
-"VRSK", "VZ", "VRTX", "V", "VNO", "VMC", "WRB", "WAB", "WMT", "WBA",
-"DIS", "WM", "WAT", "WEC", "WFC", "WELL", "WST", "WDC", "WU", "WRK", "WY",
-"WHR", "WMB",  "WYNN", "XEL", "XRX", "XYL", "YUM", "ZBRA",
-"ZBH", "ZION", "ZTS"
+ticker_list_SG = ['BN4.SI', 'A17U.SI', 'C38U.SI', 'C09.SI', 'D05.SI', 'G13.SI', 'H78.SI', 'J36.SI', 'BN4.SI', 
+                  'ME8U.SI', 'M44U.SI', 'S58.SI', 'U96.SI', 'C6L.SI','Z74.SI', 'S68.SI', 'S63.SI', 'Y92.SI', 
+                  'U11.SI', 'U14.SI', 'V03.SI', 'F34.SI', 'BS6.SI', 'BUOU.SI', 'EMI.SI', 'S51.SI']
+sp500_tickers = [ 'MSFT', 'AAPL', 'NVDA', 'AMZN', 'META', 'GOOGL', 'GOOG', 'AVGO', 'LLY', 'TSLA', 
+                 'JPM', 'UNH', 'V', 'XOM', 'MA', 'JNJ', 'PG', 'HD', 'MRK', 'COST', 'ABBV', 'ADBE', 'AMD', 
+                 'CRM', 'CVX', 'NFLX', 'WMT', 'KO', 'PEP', 'ACN', 'BAC', 'MCD', 'TMO', 'CSCO', 'LIN', 'ABT',
+                 'ORCL', 'CMCSA', 'INTC', 'INTU', 'WFC', 'DIS', 'VZ', 'AMGN', 'IBM', 'DHR', 'CAT', 'NOW',
+                 'QCOM', 'PFE', 'UNP', 'GE', 'SPGI', 'TXN', 'PM', 'AMAT', 'UBER', 'ISRG', 'RTX', 'COP', 
+                 'HON', 'T', 'LOW', 'GS', 'BKNG', 'NKE', 'PLD', 'NEE', 'BA', 'AXP', 'MDT', 'ELV', 'SYK', 
+                 'TJX', 'LRCX', 'MS', 'BLK', 'VRTX', 'ETN', 'PANW', 'C', 'SBUX', 'PGR', 'DE', 'MDLZ', 'UPS', 
+                 'ADP', 'REGN', 'CB', 'BMY', 'GILD', 'ADI', 'MMC', 'MU', 'CI', 'BSX', 'LMT', 'CVS', 'SCHW', 
+                 'AMT', 'BX', 'FI', 'ZTS', 'SNPS', 'TMUS', 'KLAC', 'CDNS', 'EQIX', 'SO', 'CME', 'DUK', 'ICE', 
+                 'MO', 'SHW', 'CSX', 'ITW', 'SLB', 'CL', 'WM', 'BDX', 'ANET', 'CMG', 'PYPL', 'TGT', 'MCK', 'PH', 
+                 'EOG', 'PSX', 'ABNB', 'USB', 'NOC', 'TT', 'MPC', 'MCO', 'TDG', 'ORLY', 'APH', 'HCA', 'MAR', 'GD', 
+                 'PNC', 'AON', 'ROP', 'FCX', 'APD', 'NSC', 'FDX', 'NXPI', 'ADSK', 'MSI', 'PCAR', 'CTAS', 'EMR', 'GM', 
+                 'LULU', 'PXD', 'MMM', 'EW', 'COF', 'ECL', 'AJG', 'HLT', 'AZO', 'TRV', 'TFC', 'AIG', 'WELL', 'ROST', 'F', 
+                 'CARR', 'CCI', 'MSCI', 'VLO', 'DXCM', 'HUM', 'MCHP', 'NUE', 'O', 'SPG', 'SRE', 'PSA', 'TEL', 'URI', 'DHI', 
+                 'IDXX', 'DLR', 'CPRT', 'GWW', 'BK', 'WMB', 'FTNT', 'CEG', 'AEP', 'KMB', 'ALL', 'SYY', 'MNST', 'AFL', 'MET', 
+                 'STZ', 'HES', 'FAST', 'CNC', 'OKE', 'NEM', 'AMP', 'COR', 'LHX', 'PAYX', 'CTSH', 'A', 'IQV', 'AME', 'LEN', 'D',
+                 'GIS', 'OXY', 'DOW', 'CTVA', 'PRU', 'OTIS', 'JCI', 'FIS', 'IT', 'ODFL', 'YUM', 'KVUE', 'VRSK', 'GPN', 'RSG', 
+                 'BIIB', 'PCG', 'CMI', 'EXC', 'CSGP', 'IR', 'EA', 'PPG', 'XEL', 'KMI', 'MRNA', 'MLM', 'CHTR', 'KDP', 'VICI', 
+                 'ED', 'CDW', 'VMC', 'EL', 'HAL', 'FICO', 'ACGL', 'ROK', 'EFX', 'ON', 'MPWR', 'EXR', 'KR', 'KHC', 'DG', 'PWR',
+                 'ADM', 'HSY', 'FTV', 'ANSS', 'RCL', 'BKR', 'PEG', 'DLTR', 'GEHC', 'WST', 'RMD', 'KEYS', 'XYL', 'HIG', 'FANG', 
+                 'DD', 'DFS', 'DVN', 'ZBH', 'TTWO', 'MTD', 'CBRE', 'WTW', 'DAL', 'EIX', 'CAH', 'WEC', 'TSCO', 'HPQ', 'ULTA', 
+                 'GLW', 'AVB', 'TROW', 'CHD', 'SBAC', 'WAB', 'WY', 'AWK', 'BR', 'APTV', 'LYB', 'NVR', 'FITB', 'PHM', 'ILMN', 
+                 'WBD', 'STT', 'HWM', 'BLDR', 'DOV', 'MTB', 'STE', 'EBAY', 'DTE', 'FLT', 'ETR', 'PTC', 'RJF', 'IFF', 'MOH',
+                 'EQR', 'TDY', 'IRM', 'EXPE', 'DRI', 'GPC', 'HPE', 'BAX', 'ALGN', 'CLX', 'ES', 'CBOE', 'NDAQ', 'TRGP', 'PPL', 
+                 'INVH', 'FE', 'WAT', 'HUBB', 'ARE', 'LH', 'AKAM', 'BALL', 'WDC', 'COO', 'VTR', 'LVS', 'FDS', 'CTRA', 'GRMN',
+                 'BRO', 'NTAP', 'STLD', 'AXON', 'LUV', 'EXPD', 'HBAN', 'AEE', 'TYL', 'OMC', 'HOLX', 'VRSN', 'CNP', 'CINF',
+                 'J', 'PFG', 'JBHT', 'RF', 'MKC', 'ATO', 'STX', 'CMS', 'VLTO', 'TXT', 'JBL', 'NTRS', 'EPAM', 'IEX', 'CCL', 
+                 'WRB', 'EG', 'WBA', 'SWKS', 'TSN', 'SYF', 'AVY', 'SNA', 'MAS', 'LW', 'FSLR', 'ESS', 'LDOS', 'CFG', 'MAA', 
+                 'TER', 'BBY', 'DPZ', 'CE', 'CF', 'K', 'PKG', 'POOL', 'EQT', 'VTRS', 'CAG', 'SWK', 'DGX', 'ENPH', 'NDSN',
+                 'HST', 'SJM', 'AMCR', 'PODD', 'UAL', 'KEY', 'ALB', 'L', 'MRO', 'BG', 'TRMB', 'RVTY', 'IPG', 'LKQ', 'ZBRA',
+                 'LYV', 'NRG', 'ROL', 'KIM', 'LNT', 'MGM', 'PNR', 'JKHY', 'GEN', 'JNPR', 'EVRG', 'IP', 'TFX', 'KMX', 'TAP', 'AES',
+                 'ALLE', 'CRL', 'UDR', 'FFIV', 'DAY', 'INCY', 'HII', 'TECH', 'NI', 'GL', 'CPT', 'REG', 'MTCH', 'QRVO', 'MOS', 
+                 'PEAK', 'HSIC', 'UHS', 'BBWI', 'WRK', 'CTLT', 'EMN', 'AOS', 'AAL', 'PAYC', 'NWSA', 'WYNN', 'APA', 'CZR', 'TPR', 'ETSY',
+                 'BXP', 'HRL', 'CPB', 'AIZ', 'CHRW', 'RHI', 'MKTX', 'BWA', 'FOXA', 'FMC', 'PNW', 'BEN', 'FRT', 'NCLH', 'XRAY', 'IVZ', 'GNRC',
+                 'PARA', 'CMA', 'BIO', 'HAS', 'WHR', 'DVA', 'ZION', 'RL', 'MHK', 'VFC', 'FOX', 'NWS'
 ]
 
 sp500 = yf.download(sp500_tickers,period = '62mo', interval = "1wk", )
@@ -84,17 +76,12 @@ ticker_list =   [
     'DG', 'HAL'
 ]
 
-ticker_list2 =    [    
-    "ICE", "MO", "CDNS", "CME", "SHW", 
-    "ITW", "BDX", "SLB", "CSX", "USB",
-    
-    "EOG", "NOC", "TGT", "CL", "PYPL", 
-    "WM", "MCK", "ANET", "PNC", "CMG"
-]
-ticker_list_Fav = ['PG', 'MO', 'EXC', 'AMAT', 'T', 'GOOGL', 'BAC', 'WFC', 'MA', 'GOOG', 'META', 'CAT', 'AMGN', 'TJX', 'MS', 'BKNG', 'PGR', 'ETN', 'NET', 'HD']
+
+ticker_list2 = ['PG', 'MO', 'EXC', 'AMAT', 'T', 'GOOGL', 'BAC', 'WFC', 'MA', 'GOOG', 'META', 'CAT', 'AMGN', 'TJX', 'MS', 'BKNG', 'PGR', 'ETN', 'NET', 'HD']
+ticker_list_Fav = [ 'NET', 'AMAT', 'PGR', 'ETN', 'PG', 'CAT', 'T', 'UNH', 'ABBV', 'GOOGL', 'BAC', 'GOOG']
 
 ticker_list3 = ["pypl", 'LLY', "NVDA", "TGT", "FANG"]
-for tick in ['AIG']:
+for tick in ticker_list_Fav:
     Ticker = tick
     data_new = yf.Ticker(Ticker).history(period = '31mo', interval ='1wk', auto_adjust = False)
     data_old = yf.Ticker(Ticker).history(period = '62mo', interval ='1wk', auto_adjust = False)
@@ -208,13 +195,20 @@ for tick in ['AIG']:
                 tr = data_work[['tr0', 'tr1', 'tr2']].max(axis=1)
                 atr = wwma(tr, n)
                 return atr
-
             df['atr'] = atr(df, 14)
+            
             return df
+        
         df = pd.concat([Cal(df_old_p), Cal(df_new_p)])
+        len_dif = len(sp500_daily_change.index) - len(df.index)
+        if len_dif > 0:
+            newp500_daily_change = sp500_daily_change.drop(index = sp500_daily_change.index[:len_dif], axis = 0, inplace = False)
+            newp500_daily_change.index = df.index
+            df["Feels_goodline"] = newp500_daily_change
+        else:
+            sp500_daily_change.index = df.index
+            df["Feels_goodline"] = sp500_daily_change
         df.drop(['Open','High','Low', 'Volume'], axis = 1, inplace = True)
-        sp500_daily_change.index = df.index
-        df["Feels_goodline"] = sp500_daily_change
         z = df.loc[((df['dir'].loc[df['dir'] == 'insf']).index)]
         z.drop(['dir','Adj Close'], inplace= True, axis = 1)
         df.dropna(inplace = True)
@@ -227,31 +221,22 @@ for tick in ['AIG']:
         X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.285, shuffle = False)
         input_shapes = [X_train.shape[0], X_val.shape[0], X_test.shape[0]]
         pipeline = Pipeline([
-        ('scaler', StandardScaler()),
-        ('classifier', DecisionTreeClassifier(random_state=42))
+             ('classifier', RandomForestClassifier(random_state=42))
         ])
         param_grid = {
-            'classifier__max_depth': [None] + list(np.linspace(3,15,5,dtype=int)),
+            'classifier__n_estimators': [30, 50, 100],
+            'classifier__max_depth': [3 ,5, 7],
             'classifier__min_samples_split': [2, 5, 10, 15],
-            'classifier__min_samples_leaf': list(np.linspace(3,15,5,dtype=int)),
-            'classifier__max_features': ['sqrt', 'log2', None],  # Adjust based on the number of features
-            'classifier__criterion': ['gini', 'entropy']
+            'classifier__min_samples_leaf': [ 3, 7, 10, 15],
+            'classifier__max_features': ['sqrt', 'log2'],
+            'classifier__bootstrap': [True],
+            'classifier__criterion': ['gini', 'entropy'],
+  
         }
-        """
-        pipeline = Pipeline([
-            ('scaler', StandardScaler()),
-            ('classifier', LogisticRegression(max_iter=30000))
-        ])
-        param_grid = {
-            'scaler__with_mean': [True, False],
-            'scaler__with_std': [True, False],
-            'classifier__penalty': ['l2'],
-            'classifier__C': np.logspace(-3, 3, 7)
-        }"""
         luist_2 = []
         luist4 = []
         custom_scorer = make_scorer(f1_score, zero_division=1)
-        for i in list(range(5,16,5)):
+        for i in list([5]):
             grid_search = GridSearchCV(pipeline, param_grid, cv=KFold(n_splits= i), scoring=custom_scorer, n_jobs = cores, error_score=np.nan)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=UndefinedMetricWarning)
@@ -263,17 +248,8 @@ for tick in ['AIG']:
         for i in range(len(luist_2)):
             luist4.append(luist_2[i][1])
         luist3.append(luist_2[luist4.index(max(luist4))])
-        """    
-        max_value = max(luist_2, key=luist_2.get)
-        abc = GridSearchCV(pipeline, param_grid, cv=KFold(n_splits= max_value), scoring='accuracy')
-        abc.fit(X_train,y_train)
-        print(len(y_train), len(y_val), len(y_test))
-        if (len(np.unique(np.array(abc.predict(X_train)))) == 2):  
-            luist3.append([abc.score(X_train,y_train)*100, abc.score(X_val,y_val)*100,abc.score(X_test,y_test)*100, abc.predict(z)])
-        else:
-            luist3.append([abc.score(X_train,y_train)*100,abc.score(X_test,y_test)*100,np.nan])"""
     for i in range(len(luist3)):
-        print(tick, ":","For K =", i + min_num , "prediction output is:", luist3[i][3], "Train/Validation/Test Confidence: ", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Current prices are:", list(df_new_p.iloc[-(i+ min_num):]['Adj Close']), "Shape:", list(input_shapes), luist3[i][4])  
+        print(tick, ":","For K =", i + min_num , "prediction output is:", luist3[i][3], "Train/Validation/Test Confidence: ", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Current prices are:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4])  
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
 print("Time elapsed = ", round((et-st)/60,2), "Mins")
