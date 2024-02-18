@@ -9,7 +9,7 @@ from sklearn.model_selection import KFold
 import yfinance as yf
 import time
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import make_scorer, f1_score
+from sklearn.metrics import make_scorer, f1_score, confusion_matrix
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.ensemble import RandomForestClassifier
 import warnings
@@ -67,27 +67,22 @@ sp500_daily_change = sp500_pct.mean(axis = 1)
 cores = 3
 min_num = 2
 ticker_list =   [ 
-     'EXC', 'FIS', 'VRSK', 'ROK',
-    'RSG', 'ODFL', 'PPG', 'EA', 'KMI',
-    'CSGP', 'GPN', 'CMI', 'MRNA', 'XEL',
-    'KDP', 'IR', 'ON', 'DD', 'VICI',
-    'CTVA', 'MLM', 'BKR', 'EXR', 'FICO',
-    'ED', 'CDW', 'KR', 'EFX', 'VMC',
-    'DG', 'HAL'
+ 'TJX', 'NET', 'HD', 'BKNG', 'AMAT', 'UNH', 'ETN', 'META', 'GOOG', 'ABBV', 'CAT', 'PG', 'GOOGL', 'ANET', 'CME', 'ICE', 'EQIX', 'TMUS', 'ZTS', 'MMC', 'REGN', 'LRCX', 'UBER', 'AMZN', 'ORLY', 'TDG', 'PH', 'MAR', 'CTAS', 'AIG', 'AFL', 'GE', 'CDNS', 'CMG', 'HCA', 'AZO', 'PRU', 'VLO'
 ]
 
 
-ticker_list2 = ['PG', 'MO', 'EXC', 'AMAT', 'T', 'GOOGL', 'BAC', 'WFC', 'MA', 'GOOG', 'META', 'CAT', 'AMGN', 'TJX', 'MS', 'BKNG', 'PGR', 'ETN', 'NET', 'HD']
-ticker_list_Fav = [ 'NET', 'AMAT', 'PGR', 'ETN', 'PG', 'CAT', 'T', 'UNH', 'ABBV', 'GOOGL', 'BAC', 'GOOG']
+ticker_list_gudearns = ['TJX', 'UNH', 'BAC', 'CME', 'MMC', 'TDG', 'K', 'UNH', 'V', 'MA', 'JNJ', 'MRK', 'ADBE', 'CRM', 'KO', 'BAC', 'CMCSA', 'VZ', 'NOW', 'PFE', 'NEE', 'TJX', 'C', 'MDLZ', 'ADP', 'MMC', 'SNPS']
+ticker_list_Fav = ['MS', 'AMAT', 'PGR', 'ETN', 'PG', 'CAT', 'T', 'UNH', 'ABBV', 'GOOGL', 'BAC', 'GOOG', 
+                   'ANET', 'CME', 'ICE', 'EQIX', 'TMUS', 'ZTS', 'MMC', 'REGN', 'LRCX', 'UBER', 'AMZN', 'ORLY', 'TDG', 'PH', 'MAR', 'CTAS', 'AIG', 'AFL', 'GE',
+                   'CDNS', 'CMG', 'HCA', 'AZO', 'PRU', 'VLO', 'EA', 'FICO', 'ED', 'CDW', 'EFX', 'VMC', 'AMD', 'ALL', 'AMT', 'K']
 
-ticker_list3 = ["pypl", 'LLY', "NVDA", "TGT", "FANG"]
-for tick in ticker_list_Fav:
-    Ticker = tick
-    data_new = yf.Ticker(Ticker).history(period = '31mo', interval ='1wk', auto_adjust = False)
-    data_old = yf.Ticker(Ticker).history(period = '62mo', interval ='1wk', auto_adjust = False)
+ticker_list3 = [ 'MDLZ', 'SNPS', 'CDW', 'VMC']
+for tick in ['VMC']:
+    stock = yf.Ticker(tick)
     luist3 = []
-
-    for K in range(min_num,4):
+    for K in range(min_num,5):
+        data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
+        data_old = stock.history(period = '62mo', interval ='1wk', auto_adjust = False)
         def Prep(df, old):
             df = df.drop('Close', axis = 1, inplace = False)
             df['Dividends'] = df['Dividends']/df['Adj Close']
@@ -241,15 +236,27 @@ for tick in ticker_list_Fav:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", category=UndefinedMetricWarning)
                 grid_search.fit(X_train, y_train)
-            if (len(np.unique(np.array(grid_search.predict(X_train)))) == 2):  
-                luist_2.append([grid_search.score(X_train,y_train)*100, grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100, grid_search.predict(z), list(enumerate(np.unique(grid_search.predict(X_train), return_counts = True)[1]))])
+            tn, fp, fn, tp = confusion_matrix(y_test,grid_search.predict(X_test)).ravel()
+            tn_val, fp_val, fn_val, tp_val = confusion_matrix(y_val,grid_search.predict(X_val)).ravel()
+            if tp == 0 or tp_val == 0:
+                tp_rate = 0
             else:
-                luist_2.append([grid_search.score(X_train,y_train)*100,grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100,np.nan, list(enumerate(np.unique(grid_search.predict(X_train), return_counts = True)[1]))])
+                tp_rate = ((tp + tp_val)/(fp + fp_val + tp + tp_val)) *100
+            if tn == 0 or tn_val == 0:
+                tn_rate = 0
+            else:    
+                tn_rate = ((tn + tn_val)/(fn + fn_val + tn + tn_val)) * 100
+            print([tn, fp, fn, tp])
+            print([tn_val, fp_val, fn_val, tp_val])
+            if (len(np.unique(np.array(grid_search.predict(X_train)))) == 2):  
+                luist_2.append([grid_search.score(X_train,y_train)*100, grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100, grid_search.predict(z), list(enumerate([round(tn_rate, 1), round(tp_rate, 1)])), [tn + tn_val, fn + fn_val, tp + tp_val, fp + fp_val]])
+            else:
+                luist_2.append([grid_search.score(X_train,y_train)*100,grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100,np.nan, list(enumerate([round(tn_rate, 1),  round(tp_rate, 1)])),  [tn + tn_val, fn + fn_val, tp + tp_val, fp + fp_val ]])
         for i in range(len(luist_2)):
             luist4.append(luist_2[i][1])
         luist3.append(luist_2[luist4.index(max(luist4))])
     for i in range(len(luist3)):
-        print(tick, ":","For K =", i + min_num , "prediction output is:", luist3[i][3], "Train/Validation/Test Confidence: ", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Current prices are:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4])  
+        print(tick, ":","For K =", i + min_num , "prediction output is:", luist3[i][3], "Train/Validation/Test Confidence: ", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Current prices are:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4], luist3[i][5])  
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
 print("Time elapsed = ", round((et-st)/60,2), "Mins")
