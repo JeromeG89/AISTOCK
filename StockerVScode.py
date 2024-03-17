@@ -14,7 +14,7 @@ from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.ensemble import RandomForestClassifier
 import warnings
 st =  time.time()
-
+import gc
 ticker_list_SG = ['BN4.SI', 'A17U.SI', 'C38U.SI', 'C09.SI', 'D05.SI', 'G13.SI', 'H78.SI', 'J36.SI', 'BN4.SI', 
                   'ME8U.SI', 'M44U.SI', 'S58.SI', 'U96.SI', 'C6L.SI','Z74.SI', 'S68.SI', 'S63.SI', 'Y92.SI', 
                   'U11.SI', 'U14.SI', 'V03.SI', 'F34.SI', 'BS6.SI', 'BUOU.SI', 'EMI.SI', 'S51.SI']
@@ -77,17 +77,19 @@ ticker_list =   [
 
 
 ticker_list_gudearns = ['TJX', 'UNH', 'BAC', 'CME', 'MMC', 'TDG', 'K', 'UNH', 'V', 'MA', 'JNJ', 'MRK', 'ADBE', 'CRM', 'KO', 'BAC', 'CMCSA', 'VZ', 'NOW', 'PFE', 'NEE', 'TJX', 'C', 'MDLZ', 'ADP', 'MMC', 'SNPS']
-ticker_list_Fav = [  'ETN', 'UNH', 'PG', 'GOOG', 'CAT', 'T', 'ABBV', 'GOOGL', 'BAC',
-                   'ANET', 'CME', 'ICE', 'EQIX', 'TMUS', 'ZTS', 'MMC', 'REGN', 'LRCX',
-                   'UBER', 'AMZN', 'ORLY', 'TDG', 'PH', 'MAR', 'CTAS', 'AIG', 'AFL', 'GE',
-                   'CDNS', 'CMG', 'HCA', 'AZO', 'PRU', 'VLO', 'EA', 'FICO', 'ED', 'CDW',
-                   'EFX', 'VMC', 'AMD', 'ALL', 'AMT', 'K']
+ticker_list_Fav = [   'UNH', 'GOOG', 'CAT', 'T', 'ABBV', 'GOOGL', 'BAC',
+                    'ICE', 'EQIX', 'TMUS', 'ZTS', 'MMC', 'REGN', 
+                   'ORLY', 'MAR', 
+                   'HCA', 'AZO', 'PRU',  'ED', 
+                   'EFX',  'AMD', 'ALL', 'AMT', 'K']
 
-ticker_list3 = [ 'SRE',
- 'CME',
- 'MDLZ',
- 'GOOG',]
-for tick in ticker_list3:
+ticker_list3 = [  'META', 'AIG', 'UBER', 'CTAS', 'GE', 'AIZ',
+                'TDG', 'HD', 'PH', 'AMAT', 'CDNS', 'CDW', 'ETN',
+                'AFL', 'VMC', 'VLO', 'NWS', 'LRCX', 'CMG', 'RL',
+                'NVDA', 'AVGO', 'FICO', 'EA', 'SNPS', 'ANET', 'PG',
+                'AMZN', 'BXP', 'KO', 'COST', 'WM', 'RSG','NOW', 'SRE', 
+                'LLY', 'V', 'AWK', 'CME']
+for tick in sp500_tickers:
     try:
         stock = yf.Ticker(tick)
         earnings = stock.get_earnings_dates(limit = 26)
@@ -232,8 +234,8 @@ for tick in ticker_list3:
             y = df['dir']
             y = y.astype('int')
             X = df.drop(['dir','Adj Close'], axis = 1)
-            X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.222, shuffle = False)
-            X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.285, shuffle = False)
+            X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.222, shuffle = True)
+            X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.285, shuffle = True)
             input_shapes = [X_train.shape[0], X_val.shape[0], X_test.shape[0]]
             pipeline = Pipeline([
                 ('classifier', RandomForestClassifier(random_state=42))
@@ -276,6 +278,7 @@ for tick in ticker_list3:
             luist3.append(luist_2[luist4.index(max(luist4))])
         for i in range(len(luist3)):
             print(tick, ":","For K =", i + min_num , "prediction output is:", luist3[i][3], "Train/Validation/Test Confidence: ", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Current prices are:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4], luist3[i][5])  
+        gc.collect()
     except:
         pass
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
