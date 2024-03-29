@@ -72,24 +72,26 @@ ticker_list =   [
  'ETN', 'AFL', 'CMG', 'PG', 'VMC', 'VLO', 'RL', 'NWS', 
  'EA', 'ANET', 'AMZN', 'BXP', 'NVDA', 'AVGO', 'LLY', 'V',
  'TJX', 'FICO', 'NOW', 'GOOGL', 'KO', 'COST', 'WM', 'AWK',
- 'UL', 'RSG', 'ADP', 'INTU'
+ 'UL', 'RSG', 'ADP', 'INTU', 'XOM'
 ]
 
-
-ticker_list_gudearns = ['TJX', 'UNH', 'BAC', 'CME', 'MMC', 'TDG', 'K', 'UNH', 'V', 'MA', 'JNJ', 'MRK', 'ADBE', 'CRM', 'KO', 'BAC', 'CMCSA', 'VZ', 'NOW', 'PFE', 'NEE', 'TJX', 'C', 'MDLZ', 'ADP', 'MMC', 'SNPS']
+#BEST: 'XOM', 'GE'
+ticker_list_gudearns = ['UNH', 'V', 'MA', 'JNJ', 'HD', 'CRM', 'KO', 'ACN', 'BAC', 'CMCSA', 'INTU',
+                        'VZ', 'NOW', 'PFE', 'LOW', 'NEE', 'MDT', 'C', 'MDLZ', 'ADP', 'MMC', 'CME',
+                        'TDG', 'SRE', 'IDXX', 'GWW', 'CNC', 'COR', 'DOW', 'CTVA', 'BIIB', 'PPG', 
+                        'WEC', 'EBAY', 'MOH', 'JBL', 'LW', 'K', 'PNR', 'PAYC']
 ticker_list_Fav = [   'UNH', 'GOOG', 'CAT', 'T', 'ABBV', 'GOOGL', 'BAC',
                     'ICE', 'EQIX', 'TMUS', 'ZTS', 'MMC', 'REGN', 
                    'ORLY', 'MAR', 
                    'HCA', 'AZO', 'PRU',  'ED', 
                    'EFX',  'AMD', 'ALL', 'AMT', 'K']
 
-ticker_list3 = [  'META', 'AIG', 'UBER', 'CTAS', 'GE', 'AIZ',
-                'TDG', 'HD', 'PH', 'AMAT', 'CDNS', 'CDW', 'ETN',
-                'AFL', 'VMC', 'VLO', 'NWS', 'LRCX', 'CMG', 'RL',
-                'NVDA', 'AVGO', 'FICO', 'EA', 'SNPS', 'ANET', 'PG',
-                'AMZN', 'BXP', 'KO', 'COST', 'WM', 'RSG','NOW', 'SRE', 
-                'LLY', 'V', 'AWK', 'CME']
-for tick in sp500_tickers:
+ticker_list3 = [ 'XOM', 'BXP',
+                'KO','COST','AWK','SNPS','CAT','T','TMUS',
+                'MMC','HCA','PRU','ALL','AMT','JPM',
+                'MA','JNJ','CRM','ACN','CMCSA','GWW','COR',
+                'CTVA','WEC','MOH','LW','TJX','UL','FICO','GOOG']
+for tick in ticker_list3:
     try:
         stock = yf.Ticker(tick)
         earnings = stock.get_earnings_dates(limit = 26)
@@ -213,7 +215,7 @@ for tick in sp500_tickers:
             df = pd.concat([Cal(df_old_p), Cal(df_new_p)])
             df.index = df.index.strftime('%Y-%m-%d')
             df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
-            df['Reported EPS'].fillna(method = 'ffill', inplace = True)
+            df['Reported EPS'] = df['Reported EPS'].ffill
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
             df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
 
@@ -278,6 +280,7 @@ for tick in sp500_tickers:
             luist3.append(luist_2[luist4.index(max(luist4))])
         for i in range(len(luist3)):
             print(tick, ":","For K =", i + min_num , "prediction output is:", luist3[i][3], "Train/Validation/Test Confidence: ", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Current prices are:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4], luist3[i][5])  
+        pd.DataFrame()
         gc.collect()
     except:
         pass
