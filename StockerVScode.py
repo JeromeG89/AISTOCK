@@ -9,7 +9,7 @@ from sklearn.model_selection import KFold
 import yfinance as yf
 import time
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import make_scorer, f1_score, confusion_matrix
+from sklearn.metrics import make_scorer, f1_score, confusion_matrix, roc_auc_score
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.ensemble import RandomForestClassifier
 import warnings
@@ -66,39 +66,24 @@ sp500_daily_change = sp500_pct.mean(axis = 1)
  
 cores = 3
 min_num = 1
-ticker_list =   [ 
- 'META', 'UBER', 'CTAS', 'TDG', 'AIG', 'GE', 'AIZ', 
- 'CDNS', 'HD', 'PH', 'SNPS', 'AMAT', 'LRCX', 'CDW', 
- 'ETN', 'AFL', 'CMG', 'PG', 'VMC', 'VLO', 'RL', 'NWS', 
- 'EA', 'ANET', 'AMZN', 'BXP', 'NVDA', 'AVGO', 'LLY', 'V',
- 'TJX', 'FICO', 'NOW', 'GOOGL', 'KO', 'COST', 'WM', 'AWK',
- 'UL', 'RSG', 'ADP', 'INTU', 'XOM'
-]
-
+ticker_list =   ['CDW', 'VLO','PG','PH','HD','TDG']
+#'CDW', 'VLO','PG','PH','HD','TDG'
 #BEST: 'XOM', 'GE'
-ticker_list_gudearns = ['UNH', 'V', 'MA', 'JNJ', 'HD', 'CRM', 'KO', 'ACN', 'BAC', 'CMCSA', 'INTU',
-                        'VZ', 'NOW', 'PFE', 'LOW', 'NEE', 'MDT', 'C', 'MDLZ', 'ADP', 'MMC', 'CME',
-                        'TDG', 'SRE', 'IDXX', 'GWW', 'CNC', 'COR', 'DOW', 'CTVA', 'BIIB', 'PPG', 
-                        'WEC', 'EBAY', 'MOH', 'JBL', 'LW', 'K', 'PNR', 'PAYC']
-ticker_list_Fav = [   'UNH', 'GOOG', 'CAT', 'T', 'ABBV', 'GOOGL', 'BAC',
-                    'ICE', 'EQIX', 'TMUS', 'ZTS', 'MMC', 'REGN', 
-                   'ORLY', 'MAR', 
-                   'HCA', 'AZO', 'PRU',  'ED', 
-                   'EFX',  'AMD', 'ALL', 'AMT', 'K']
-
-ticker_list3 = [ 'XOM', 'BXP',
-                'KO','COST','AWK','SNPS','CAT','T','TMUS',
-                'MMC','HCA','PRU','ALL','AMT','JPM',
-                'MA','JNJ','CRM','ACN','CMCSA','GWW','COR',
-                'CTVA','WEC','MOH','LW','TJX','UL','FICO','GOOG']
-for tick in ticker_list3:
+confu_level= 75
+confi_level = 75
+roc_level = 0
+min_num = 1
+max_num = 4
+mp_tut = {0: 'Short', 1: 'Long'}
+filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\AI_STOCKS_LOG\15-4-23.txt'
+for tick in ticker_list:
     try:
         stock = yf.Ticker(tick)
         earnings = stock.get_earnings_dates(limit = 26)
         earnings.index = earnings.index.strftime('%Y-%m-%d')
         earnings = earnings['Reported EPS'].dropna()
         luist3 = []
-        for K in range(min_num,5):
+        for K in range(min_num,max_num + 1):
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
             data_old = stock.history(period = '62mo', interval ='1wk', auto_adjust = False)
             def Prep(df, old):
@@ -215,7 +200,7 @@ for tick in ticker_list3:
             df = pd.concat([Cal(df_old_p), Cal(df_new_p)])
             df.index = df.index.strftime('%Y-%m-%d')
             df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
-            df['Reported EPS'] = df['Reported EPS'].ffill
+            df['Reported EPS'] = df['Reported EPS'].ffill()
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
             df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
 
@@ -236,8 +221,8 @@ for tick in ticker_list3:
             y = df['dir']
             y = y.astype('int')
             X = df.drop(['dir','Adj Close'], axis = 1)
-            X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.222, shuffle = True)
-            X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.285, shuffle = True)
+            X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.222, shuffle = True, random_state=42)
+            X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.285, shuffle = True, random_state=42)
             input_shapes = [X_train.shape[0], X_val.shape[0], X_test.shape[0]]
             pipeline = Pipeline([
                 ('classifier', RandomForestClassifier(random_state=42))
@@ -250,16 +235,23 @@ for tick in ticker_list3:
                 'classifier__max_features': ['sqrt', 'log2'],
                 'classifier__bootstrap': [True],
                 'classifier__criterion': ['gini', 'entropy'],
-    
+
             }
             luist_2 = []
             luist4 = []
             custom_scorer = make_scorer(f1_score, zero_division=1)
+            
             for i in list([5]):
                 grid_search = GridSearchCV(pipeline, param_grid, cv=KFold(n_splits= i), scoring=custom_scorer, n_jobs = cores, error_score=np.nan)
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", category=UndefinedMetricWarning)
                     grid_search.fit(X_train, y_train)
+                    best_params = grid_search.best_params_
+                    best_estimator = grid_search.best_estimator_
+                    y_pred = best_estimator.predict(X_test)
+                    y_pred_val = best_estimator.predict(X_val)
+                    roc_auc = (roc_auc_score(y_test, y_pred) + roc_auc_score(y_val, y_pred_val)) / 2
+
                 #Confusion matrix
                 tn, fp, fn, tp = confusion_matrix(y_test,grid_search.predict(X_test)).ravel()
                 tn_val, fp_val, fn_val, tp_val = confusion_matrix(y_val,grid_search.predict(X_val)).ravel()
@@ -279,10 +271,18 @@ for tick in ticker_list3:
                 luist4.append(luist_2[i][1])
             luist3.append(luist_2[luist4.index(max(luist4))])
         for i in range(len(luist3)):
-            print(tick, ":","For K =", i + min_num , "prediction output is:", luist3[i][3], "Train/Validation/Test Confidence: ", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Current prices are:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4], luist3[i][5])  
+            print(tick, ":","For K =", i + min_num , "prediction:", luist3[i][3], "Confidence", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Prices:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4], luist3[i][5], 'Roc_Auc: ', round(roc_auc,2)) 
+            mp_con = {0: luist3[i][4][0][1], 1: luist3[i][4][1][1]}
+            try:
+                for j in range(len(luist3[i][3])):
+                    if luist3[i][1] >= confi_level and luist3[i][2] >= confi_level and (luist3[i][2] + luist3[i][1])/2 >= confi_level and mp_con.get(luist3[i][3][j], 0) >= confu_level and roc_auc >= roc_level / 100:
+                        with open(filepath, 'a') as file:
+                            file.write(f"{tick}, {df_new_p.index[-(len(luist3[i][3]) - j)].month}/{df_new_p.index[-(len(luist3[i][3]) - j)].day}/{df_new_p.index[-(len(luist3[i][3]) - j)].year}, '' ,{min_num + i}, {mp_tut.get(luist3[i][3][j])},'','','', {round(luist3[i][0], 1)/ 100}, {round(luist3[i][1], 1) / 100}, {round(luist3[i][2], 1) / 100}, {mp_con.get(luist3[i][3][j], 0) / 100}, {round(roc_auc,2)}\n")
+            except TypeError:
+                print('error hit')
         pd.DataFrame()
         gc.collect()
-    except:
+    except AttributeError:
         pass
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
