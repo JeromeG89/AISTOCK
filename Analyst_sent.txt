@@ -1,0 +1,18 @@
+Outperform,2.0
+Strong Buy,2.0
+Overweight,2.0
+Positive,1.0
+Buy,1.0
+Hold,0.0
+Sector Perform,0.5
+Market Perform,0.5
+Neutral,0.0
+Sell,-1.0
+,0.0
+Equal-Weight,0.0
+Peer Perform,0.5
+Sector Weight,0.0
+Underperform,-1.0
+In-Line,0.0
+Underweight,-2.0
+Perform,0.5
