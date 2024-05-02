@@ -1,18 +1,22 @@
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
 import yfinance as yf
 import time
-from sklearn.tree import DecisionTreeClassifier
+
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix, roc_auc_score
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.ensemble import RandomForestClassifier
 import warnings
+
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 st =  time.time()
 import gc
 ticker_list_SG = ['BN4.SI', 'A17U.SI', 'C38U.SI', 'C09.SI', 'D05.SI', 'G13.SI', 'H78.SI', 'J36.SI', 'BN4.SI', 
@@ -64,9 +68,35 @@ sp500_daily_change = sp500_pct.mean(axis = 1)
 
 
  
-cores = 3
+cores = 2
 min_num = 1
-ticker_list =   ['CDW', 'VLO','PG','PH','HD','TDG']
+ticker_list =   [ 'SO', 'CME', 'DUK', 'ICE', 
+                 'MO', 'SHW', 'CSX', 'ITW', 'SLB', 'CL', 'WM', 'BDX', 'ANET', 'CMG', 'PYPL', 'TGT', 'MCK', 'PH', 
+                 'EOG', 'PSX', 'ABNB', 'USB', 'NOC', 'TT', 'MPC', 'MCO', 'TDG', 'ORLY', 'APH', 'HCA', 'MAR', 'GD', 
+                 'PNC', 'AON', 'ROP', 'FCX', 'APD', 'NSC', 'FDX', 'NXPI', 'ADSK', 'MSI', 'PCAR', 'CTAS', 'EMR', 'GM', 
+                 'LULU', 'PXD', 'MMM', 'EW', 'COF', 'ECL', 'AJG', 'HLT', 'AZO', 'TRV', 'TFC', 'AIG', 'WELL', 'ROST', 'F', 
+                 'CARR', 'CCI', 'MSCI', 'VLO', 'DXCM', 'HUM', 'MCHP', 'NUE', 'O', 'SPG', 'SRE', 'PSA', 'TEL', 'URI', 'DHI', 
+                 'IDXX', 'DLR', 'CPRT', 'GWW', 'BK', 'WMB', 'FTNT', 'CEG', 'AEP', 'KMB', 'ALL', 'SYY', 'MNST', 'AFL', 'MET', 
+                 'STZ', 'HES', 'FAST', 'CNC', 'OKE', 'NEM', 'AMP', 'COR', 'LHX', 'PAYX', 'CTSH', 'A', 'IQV', 'AME', 'LEN', 'D',
+                 'GIS', 'OXY', 'DOW', 'CTVA', 'PRU', 'OTIS', 'JCI', 'FIS', 'IT', 'ODFL', 'YUM', 'KVUE', 'VRSK', 'GPN', 'RSG', 
+                 'BIIB', 'PCG', 'CMI', 'EXC', 'CSGP', 'IR', 'EA', 'PPG', 'XEL', 'KMI', 'MRNA', 'MLM', 'CHTR', 'KDP', 'VICI', 
+                 'ED', 'CDW', 'VMC', 'EL', 'HAL', 'FICO', 'ACGL', 'ROK', 'EFX', 'ON', 'MPWR', 'EXR', 'KR', 'KHC', 'DG', 'PWR',
+                 'ADM', 'HSY', 'FTV', 'ANSS', 'RCL', 'BKR', 'PEG', 'DLTR', 'GEHC', 'WST', 'RMD', 'KEYS', 'XYL', 'HIG', 'FANG', 
+                 'DD', 'DFS', 'DVN', 'ZBH', 'TTWO', 'MTD', 'CBRE', 'WTW', 'DAL', 'EIX', 'CAH', 'WEC', 'TSCO', 'HPQ', 'ULTA', 
+                 'GLW', 'AVB', 'TROW', 'CHD', 'SBAC', 'WAB', 'WY', 'AWK', 'BR', 'APTV', 'LYB', 'NVR', 'FITB', 'PHM', 'ILMN', 
+                 'WBD', 'STT', 'HWM', 'BLDR', 'DOV', 'MTB', 'STE', 'EBAY', 'DTE', 'FLT', 'ETR', 'PTC', 'RJF', 'IFF', 'MOH',
+                 'EQR', 'TDY', 'IRM', 'EXPE', 'DRI', 'GPC', 'HPE', 'BAX', 'ALGN', 'CLX', 'ES', 'CBOE', 'NDAQ', 'TRGP', 'PPL', 
+                 'INVH', 'FE', 'WAT', 'HUBB', 'ARE', 'LH', 'AKAM', 'BALL', 'WDC', 'COO', 'VTR', 'LVS', 'FDS', 'CTRA', 'GRMN',
+                 'BRO', 'NTAP', 'STLD', 'AXON', 'LUV', 'EXPD', 'HBAN', 'AEE', 'TYL', 'OMC', 'HOLX', 'VRSN', 'CNP', 'CINF',
+                 'J', 'PFG', 'JBHT', 'RF', 'MKC', 'ATO', 'STX', 'CMS', 'VLTO', 'TXT', 'JBL', 'NTRS', 'EPAM', 'IEX', 'CCL', 
+                 'WRB', 'EG', 'WBA', 'SWKS', 'TSN', 'SYF', 'AVY', 'SNA', 'MAS', 'LW', 'FSLR', 'ESS', 'LDOS', 'CFG', 'MAA', 
+                 'TER', 'BBY', 'DPZ', 'CE', 'CF', 'K', 'PKG', 'POOL', 'EQT', 'VTRS', 'CAG', 'SWK', 'DGX', 'ENPH', 'NDSN',
+                 'HST', 'SJM', 'AMCR', 'PODD', 'UAL', 'KEY', 'ALB', 'L', 'MRO', 'BG', 'TRMB', 'RVTY', 'IPG', 'LKQ', 'ZBRA',
+                 'LYV', 'NRG', 'ROL', 'KIM', 'LNT', 'MGM', 'PNR', 'JKHY', 'GEN', 'JNPR', 'EVRG', 'IP', 'TFX', 'KMX', 'TAP', 'AES',
+                 'ALLE', 'CRL', 'UDR', 'FFIV', 'DAY', 'INCY', 'HII', 'TECH', 'NI', 'GL', 'CPT', 'REG', 'MTCH', 'QRVO', 'MOS', 
+                 'PEAK', 'HSIC', 'UHS', 'BBWI', 'WRK', 'CTLT', 'EMN', 'AOS', 'AAL', 'PAYC', 'NWSA', 'WYNN', 'APA', 'CZR', 'TPR', 'ETSY',
+                 'BXP', 'HRL', 'CPB', 'AIZ', 'CHRW', 'RHI', 'MKTX', 'BWA', 'FOXA', 'FMC', 'PNW', 'BEN', 'FRT', 'NCLH', 'XRAY', 'IVZ', 'GNRC',
+                 'PARA', 'CMA', 'BIO', 'HAS', 'WHR', 'DVA', 'ZION', 'RL', 'MHK', 'VFC', 'FOX', 'NWS']
 #'CDW', 'VLO','PG','PH','HD','TDG'
 #BEST: 'XOM', 'GE'
 confu_level= 75
@@ -75,13 +105,67 @@ roc_level = 0
 min_num = 1
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\AI_STOCKS_LOG\15-4-23.txt'
-for tick in ticker_list:
+filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\22-4-23.txt'
+oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
+for tick in ['PG']:
     try:
         stock = yf.Ticker(tick)
-        earnings = stock.get_earnings_dates(limit = 26)
-        earnings.index = earnings.index.strftime('%Y-%m-%d')
-        earnings = earnings['Reported EPS'].dropna()
+        #analyst ratings
+        file_path_sent = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\StockerVS\Analyst_sent.txt'
+        analyst_mp = {}
+        with open(file_path_sent,'r') as file:
+            for line in file:
+                key, value = line.strip().split(',')
+                analyst_mp[key] = float(value)
+        recos = stock.upgrades_downgrades
+        recos = recos[recos.index.strftime('%Y-%m-%d') >= oldest_date].copy()
+        recos['To_Grade_weight'] = recos['ToGrade'].map(analyst_mp)
+        recos['From_Grade_weight'] = recos['FromGrade'].map(analyst_mp)
+        working = recos[['ToGrade', 'FromGrade', 'To_Grade_weight', 'From_Grade_weight']]
+        to_grade = working[['ToGrade', 'To_Grade_weight']].drop_duplicates('ToGrade')
+        to_grade = to_grade[to_grade['To_Grade_weight'].isna()]
+    
+        from_grade = working[['FromGrade', 'From_Grade_weight']].drop_duplicates('FromGrade')
+        from_grade = from_grade[from_grade['From_Grade_weight'].isna()]
+
+        #Write for ToGrade
+        for sentiment in to_grade['ToGrade']:
+            new_weight = input(f'Enter relevant weight "{sentiment}": ')
+            analyst_mp[sentiment] = new_weight
+
+        #Write for FromGrade
+        for sentiment in from_grade['FromGrade']:
+            if sentiment in analyst_mp.keys():
+                pass
+            else:
+                new_weight = input(f'Enter relevant weight "{sentiment}": ')
+                analyst_mp[sentiment] = new_weight
+
+        recos['To_Grade_weight'] = recos['ToGrade'].map(analyst_mp).astype('float')
+        recos['From_Grade_weight'] = recos['FromGrade'].map(analyst_mp).astype('float')
+
+        with open(file_path_sent, 'w') as file:
+            for key, value in analyst_mp.items():
+                file.write(f"{key},{value}\n")
+        recos['Month'] = recos['Firm'].index.strftime("%Y-%m")
+        mp_raw, mp_change  = {}, {}
+        mp_raw_list = []
+        mp_change_list = []
+        recos_values = recos.values
+        for i in recos.values:
+            mp_raw[i[0]] = i[4]
+            mp_change[i[0]] = i[4] - i[5]
+            mp_raw_list.append(np.mean(list(mp_raw.values())))
+            mp_change_list.append(np.mean(list(mp_change.values())))
+        recos['mp_raw'] = mp_raw_list
+        recos['mp_change'] = mp_change_list
+        anal_sent = recos[['Month','mp_raw', 'mp_change']]
+        anal_sent = anal_sent.drop_duplicates('Month', keep = 'last').reset_index(drop = True)
+
+        
+        #earnings = stock.get_earnings_dates(limit = 26)
+        #earnings.index = earnings.index.strftime('%Y-%m-%d')
+        #earnings = earnings['Reported EPS'].dropna()
         luist3 = []
         for K in range(min_num,max_num + 1):
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
@@ -198,11 +282,17 @@ for tick in ticker_list:
                 return df
             
             df = pd.concat([Cal(df_old_p), Cal(df_new_p)])
+            df['Month'] = df.index.strftime('%Y-%m')
             df.index = df.index.strftime('%Y-%m-%d')
-            df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
-            df['Reported EPS'] = df['Reported EPS'].ffill()
+            index_holder = df.index
+            #df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
+            #df['Reported EPS'] = df['Reported EPS'].ffill()
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
-            df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
+            #df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
+
+            df = pd.merge(df, anal_sent, on = 'Month', how = 'left').drop('Month', axis = 1)
+            df.index = index_holder
+            df[['mp_raw', 'mp_change']] = df[['mp_raw', 'mp_change']].ffill()
 
             len_dif = len(sp500_daily_change.index) - len(df.index)
             if len_dif > 0:
@@ -264,26 +354,27 @@ for tick in ticker_list:
                 else:    
                     tn_rate = ((tn + tn_val)/(fn + fn_val + tn + tn_val)) * 100
                 if (len(np.unique(np.array(grid_search.predict(X_train)))) == 2):  
-                    luist_2.append([grid_search.score(X_train,y_train)*100, grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100, grid_search.predict(z), list(enumerate([round(tn_rate, 1), round(tp_rate, 1)])), [tn + tn_val, fn + fn_val, tp + tp_val, fp + fp_val]])
+                    luist_2.append([grid_search.score(X_train,y_train)*100, grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100, grid_search.predict(z), list(enumerate([round(tn_rate, 1), round(tp_rate, 1)])), [tn + tn_val, fn + fn_val, tp + tp_val, fp + fp_val], round(roc_auc,2)])
                 else:
-                    luist_2.append([grid_search.score(X_train,y_train)*100,grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100,np.nan, list(enumerate([round(tn_rate, 1),  round(tp_rate, 1)])),  [tn + tn_val, fn + fn_val, tp + tp_val, fp + fp_val ]])
+                    luist_2.append([grid_search.score(X_train,y_train)*100,grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100,np.nan, list(enumerate([round(tn_rate, 1),  round(tp_rate, 1)])),  [tn + tn_val, fn + fn_val, tp + tp_val, fp + fp_val ], round(roc_auc,2)])
             for i in range(len(luist_2)):
                 luist4.append(luist_2[i][1])
             luist3.append(luist_2[luist4.index(max(luist4))])
         for i in range(len(luist3)):
-            print(tick, ":","For K =", i + min_num , "prediction:", luist3[i][3], "Confidence", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Prices:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4], luist3[i][5], 'Roc_Auc: ', round(roc_auc,2)) 
+            print(tick, ":","For K =", i + min_num , "prediction:", luist3[i][3], "Confidence", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Prices:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4], luist3[i][5], 'Roc_Auc: ', round(luist3[i][6], 2)) 
             mp_con = {0: luist3[i][4][0][1], 1: luist3[i][4][1][1]}
             try:
                 for j in range(len(luist3[i][3])):
                     if luist3[i][1] >= confi_level and luist3[i][2] >= confi_level and (luist3[i][2] + luist3[i][1])/2 >= confi_level and mp_con.get(luist3[i][3][j], 0) >= confu_level and roc_auc >= roc_level / 100:
                         with open(filepath, 'a') as file:
-                            file.write(f"{tick}, {df_new_p.index[-(len(luist3[i][3]) - j)].month}/{df_new_p.index[-(len(luist3[i][3]) - j)].day}/{df_new_p.index[-(len(luist3[i][3]) - j)].year}, '' ,{min_num + i}, {mp_tut.get(luist3[i][3][j])},'','','', {round(luist3[i][0], 1)/ 100}, {round(luist3[i][1], 1) / 100}, {round(luist3[i][2], 1) / 100}, {mp_con.get(luist3[i][3][j], 0) / 100}, {round(roc_auc,2)}\n")
+                            file.write(f"{tick}, {df_new_p.index[-(len(luist3[i][3]) - j)].month}/{df_new_p.index[-(len(luist3[i][3]) - j)].day}/{df_new_p.index[-(len(luist3[i][3]) - j)].year}, ,{min_num + i}, {mp_tut.get(luist3[i][3][j])}, , , , {round(luist3[i][0], 1)/ 100}, {round(luist3[i][1], 1) / 100}, {round(luist3[i][2], 1) / 100}, {round(mp_con.get(luist3[i][3][j], 0) / 100, 3)}, {round(luist3[i][6],2)}\n")
             except TypeError:
                 print('error hit')
         pd.DataFrame()
         gc.collect()
-    except AttributeError:
-        pass
+    except IndexError:
+        print(f"{tick} Fail")
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
 print("Time elapsed = ", round((et-st)/60,2), "Mins")
+print(1)
