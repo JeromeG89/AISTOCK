@@ -16,3 +16,17 @@ Underperform,-1.0
 In-Line,0.0
 Underweight,-2.0
 Perform,0.5
+Reduce,-0.5
+Sector Outperform,2.0
+Market Outperform,2.0
+Mixed,0.0
+Negative,-1.0
+Conviction Buy,2.0
+Strong Sell,-2.0
+Hold Neutral,0.0
+Accumulate,0.75
+Action List Buy,2.0
+Outperformer,2.0
+Gradually Accumulate,0.5
+Sector Underperform,-2.0
+Above Average,2.0

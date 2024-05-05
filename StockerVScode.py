@@ -88,15 +88,8 @@ ticker_list =   [ 'SO', 'CME', 'DUK', 'ICE',
                  'EQR', 'TDY', 'IRM', 'EXPE', 'DRI', 'GPC', 'HPE', 'BAX', 'ALGN', 'CLX', 'ES', 'CBOE', 'NDAQ', 'TRGP', 'PPL', 
                  'INVH', 'FE', 'WAT', 'HUBB', 'ARE', 'LH', 'AKAM', 'BALL', 'WDC', 'COO', 'VTR', 'LVS', 'FDS', 'CTRA', 'GRMN',
                  'BRO', 'NTAP', 'STLD', 'AXON', 'LUV', 'EXPD', 'HBAN', 'AEE', 'TYL', 'OMC', 'HOLX', 'VRSN', 'CNP', 'CINF',
-                 'J', 'PFG', 'JBHT', 'RF', 'MKC', 'ATO', 'STX', 'CMS', 'VLTO', 'TXT', 'JBL', 'NTRS', 'EPAM', 'IEX', 'CCL', 
-                 'WRB', 'EG', 'WBA', 'SWKS', 'TSN', 'SYF', 'AVY', 'SNA', 'MAS', 'LW', 'FSLR', 'ESS', 'LDOS', 'CFG', 'MAA', 
-                 'TER', 'BBY', 'DPZ', 'CE', 'CF', 'K', 'PKG', 'POOL', 'EQT', 'VTRS', 'CAG', 'SWK', 'DGX', 'ENPH', 'NDSN',
-                 'HST', 'SJM', 'AMCR', 'PODD', 'UAL', 'KEY', 'ALB', 'L', 'MRO', 'BG', 'TRMB', 'RVTY', 'IPG', 'LKQ', 'ZBRA',
-                 'LYV', 'NRG', 'ROL', 'KIM', 'LNT', 'MGM', 'PNR', 'JKHY', 'GEN', 'JNPR', 'EVRG', 'IP', 'TFX', 'KMX', 'TAP', 'AES',
-                 'ALLE', 'CRL', 'UDR', 'FFIV', 'DAY', 'INCY', 'HII', 'TECH', 'NI', 'GL', 'CPT', 'REG', 'MTCH', 'QRVO', 'MOS', 
-                 'PEAK', 'HSIC', 'UHS', 'BBWI', 'WRK', 'CTLT', 'EMN', 'AOS', 'AAL', 'PAYC', 'NWSA', 'WYNN', 'APA', 'CZR', 'TPR', 'ETSY',
-                 'BXP', 'HRL', 'CPB', 'AIZ', 'CHRW', 'RHI', 'MKTX', 'BWA', 'FOXA', 'FMC', 'PNW', 'BEN', 'FRT', 'NCLH', 'XRAY', 'IVZ', 'GNRC',
-                 'PARA', 'CMA', 'BIO', 'HAS', 'WHR', 'DVA', 'ZION', 'RL', 'MHK', 'VFC', 'FOX', 'NWS']
+                 'J', 'PFG', 'JBHT', 'RF', 'MKC', 'ATO', 'STX', 'CMS', 
+               ]
 #'CDW', 'VLO','PG','PH','HD','TDG'
 #BEST: 'XOM', 'GE'
 confu_level= 75
@@ -105,13 +98,13 @@ roc_level = 0
 min_num = 1
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\22-4-23.txt'
+filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\29-4-23.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
-for tick in ['PG']:
+for tick in ticker_list[::-1]:
     try:
         stock = yf.Ticker(tick)
         #analyst ratings
-        file_path_sent = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\StockerVS\Analyst_sent.txt'
+        file_path_sent = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\StockerVS\AISTOCK\Analyst_sent.txt'
         analyst_mp = {}
         with open(file_path_sent,'r') as file:
             for line in file:
@@ -163,9 +156,9 @@ for tick in ['PG']:
         anal_sent = anal_sent.drop_duplicates('Month', keep = 'last').reset_index(drop = True)
 
         
-        #earnings = stock.get_earnings_dates(limit = 26)
-        #earnings.index = earnings.index.strftime('%Y-%m-%d')
-        #earnings = earnings['Reported EPS'].dropna()
+        earnings = stock.get_earnings_dates(limit = 26)
+        earnings.index = earnings.index.strftime('%Y-%m-%d')
+        earnings = earnings['Reported EPS'].dropna()
         luist3 = []
         for K in range(min_num,max_num + 1):
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
@@ -173,33 +166,26 @@ for tick in ['PG']:
             def Prep(df, old):
                 df = df.drop('Close', axis = 1, inplace = False)
                 df['Dividends'] = df['Dividends']/df['Adj Close']
-                df['dir'] = (df['Adj Close'].shift(-K) - df['Adj Close'])
                 if old == True:
                     df = df.loc[~df.index.isin(data_new.index)]
-                df.loc[df['dir'] > 0, 'dir'] = 1
-                df.loc[df['dir'] < 0, 'dir'] = 0
-                if old == False:
-                    df['dir'] = df['dir'].fillna('insf')
                 return df
             df_new_p = Prep(data_new, old = False).copy()
             df_old_p = Prep(data_old, old = True).copy()
-
+            
             def Cal(data3):
                 data3['Dividends'] = data3['Dividends']/data3['Adj Close']
                 df = data3.copy()
                 #Volatility
                 df['volatility'] = df['Adj Close'].rolling(window = 12, min_periods = 12).std()
                 
-                df['dir'] = (df['Adj Close'].shift(-K) - df['Adj Close']) / df['Adj Close']
+
                 #BOV
                 dof = np.sign(df['Adj Close'] - df['Adj Close'].shift(1))
                 Vol_Change = (df['Volume'] * dof)
                 bov = Vol_Change.cumsum()
                 df['BOV'] = bov.pct_change()
 
-                df.loc[df['dir'] > 0, 'dir'] = 1
-                df.loc[df['dir'] < 0, 'dir'] = 0
-                df['dir'] = df['dir'].fillna('insf')
+
                 Low_60 = df['Adj Close'].rolling(window = 60, min_periods = 60).min()
                 High_60 = df['Adj Close'].rolling(window = 60, min_periods = 60).max()
                 Dif = High_60 - Low_60
@@ -280,15 +266,23 @@ for tick in ['PG']:
                 df['atr'] = atr(df, 14)
                 
                 return df
-            
             df = pd.concat([Cal(df_old_p), Cal(df_new_p)])
+            def target_variable(df):
+                direc = df['Adj Close'].shift(-K) - df['Adj Close']
+                direc = direc.astype(object)
+                direc[direc > 0] = 1
+                direc[direc < 0] = 0
+                direc[direc.isna()] = 'insf'
+                return direc
+            
+            df['dir'] = target_variable(df)    
             df['Month'] = df.index.strftime('%Y-%m')
             df.index = df.index.strftime('%Y-%m-%d')
             index_holder = df.index
-            #df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
-            #df['Reported EPS'] = df['Reported EPS'].ffill()
+            df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
+            df['Reported EPS'] = df['Reported EPS'].ffill()
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
-            #df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
+            df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
 
             df = pd.merge(df, anal_sent, on = 'Month', how = 'left').drop('Month', axis = 1)
             df.index = index_holder
@@ -302,12 +296,13 @@ for tick in ['PG']:
             else:
                 sp500_daily_change.index = df.index
                 df["Feels_goodline"] = sp500_daily_change
+                
             df.drop(['Open','High','Low', 'Volume'], axis = 1, inplace = True)
             z = df.loc[((df['dir'].loc[df['dir'] == 'insf']).index)]
             z.drop(['dir','Adj Close'], inplace= True, axis = 1)
+            
             df.dropna(inplace = True)
             df.drop(index = z.index, inplace = True, axis = 0)
-            z = z[K:]
             y = df['dir']
             y = y.astype('int')
             X = df.drop(['dir','Adj Close'], axis = 1)
@@ -369,7 +364,7 @@ for tick in ['PG']:
                         with open(filepath, 'a') as file:
                             file.write(f"{tick}, {df_new_p.index[-(len(luist3[i][3]) - j)].month}/{df_new_p.index[-(len(luist3[i][3]) - j)].day}/{df_new_p.index[-(len(luist3[i][3]) - j)].year}, ,{min_num + i}, {mp_tut.get(luist3[i][3][j])}, , , , {round(luist3[i][0], 1)/ 100}, {round(luist3[i][1], 1) / 100}, {round(luist3[i][2], 1) / 100}, {round(mp_con.get(luist3[i][3][j], 0) / 100, 3)}, {round(luist3[i][6],2)}\n")
             except TypeError:
-                print('error hit')
+                pass
         pd.DataFrame()
         gc.collect()
     except IndexError:
