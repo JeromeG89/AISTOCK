@@ -29,4 +29,8 @@ Action List Buy,2.0
 Outperformer,2.0
 Gradually Accumulate,0.5
 Sector Underperform,-2.0
-Above Average,2.0
+Above Average,1.0
+Average,0.0
+Market Weight,0.0
+Top Pick,2.0
+Underperformer,-2.0
