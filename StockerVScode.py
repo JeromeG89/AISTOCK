@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import random
 from sklearn.model_selection import train_test_split
-
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import KFold
@@ -12,6 +11,10 @@ import time
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix, roc_auc_score
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.preprocessing import StandardScaler
+from tpot import TPOTClassifier
+from sklearn.pipeline import make_pipeline
 import warnings
 
 from datetime import datetime
@@ -73,26 +76,65 @@ sp500_daily_change = sp500_pct.mean(axis = 1)
  
 cores = 3
 min_num = 1
-ticker_list =   ['CTVA', 'TECH', 'BEN', 'GNRC', 'JNPR', 'CPT', 'ON'
-               ]
+ticker_list =   [ 
+                 'LIN', 'KMI', 'WMT', 'JPM', 'LMT', 'MDLZ', 'GD', 'OTIS', 'CHD', 'DUK', 'HIG', 'MO',
+                 'CSX',  'WMB', 'STZ', 'CME','MRK',  'ED', 'AMP', 'ABT', 
+                  'AIG',  'VRSN', 'SO', 'PEG',  'PPL', 'ABBV', 'CB', 
+                 'HOLX', 'BR', 'AVY', 'IEX',  'KDP', 'TRV', 'DRI', 'CNP', 'ADP', 'FE',
+                 'CSCO', 'KHC', 'EA', 'PAYX', 'SRE', 'MDT', 'CMS', 'PRU', 'GIS', 'OKE', 'CBOE', 'LNT',
+                 'HD', 'ETR', 'DGX', 'AFL', 'WEC', 'BK', 'JKHY', 'LYB', 'SPGI',  'XYL', 'DOV', 
+                 'EXPD', 'VICI', 'PPG', 'SHW', 'BSX', 'NI',  'DTE', 'MCO', 'BDX', 'O',
+                 'BLK', 'REGN', 'WRB', 'DOW', 'UNP', 'PFG', 'FDS', 'PTC', 'CPRT', 'EVRG', 'TEL', 'CVX', 
+                 'HSY', 'AON', 'AVB', 'AAPL', 'FAST', 'INVH', 'MET', 'KR', 'PNW', 'WAB', 'AEP', 'REG', 
+                 'TDG', 'VMC', 'K', 'CAG', 'NDSN', 'CTSH', 'IBM', 'SYK', 'AEE', 'PCG', 'FTV', 'XOM',
+                 'FFIV', 'EIX', 'EQR', 'GWW', 'WELL', 'ROST',  'EXC', 'PKG', 'AZO', 'J', 'TMO', 
+                 'PCAR', 'NOC', 'ZBH', 'ACN', 'CINF', 'MNST', 'MAR', 'STE', 'LOW', 'AXP', 'CAH', 'HSIC',
+                 'RJF', 'LHX', 'BMY', 'GS', 'FRT', 'CDW', 'ELV', 'WTW', 'NWSA', 'C', 'AOS', 'NWS', 'SJM',
+                 'TRGP', 'WY', 'GLW', 'IR', 'SNA', 'MLM', 'EMR', 'CMCSA', 'GILD', 'FOX', 'TAP', 'AWK', 
+                 'AMCR', 'TSN', 'SPG', 'WFC',  'XEL', 'RTX', 'COP', 'UNH', 'OMC', 'ACGL', 'DHR', 
+                 'FOXA', 'CMG', 'BG', 'CMI', 'BKR', 'TSCO', 'TDY', 'HCA', 'AIZ', 'OXY', 'ALL', 'FANG', 
+                 'CPB', 'UDR', 'AKAM', 'IRM', 'ESS', 'NDAQ', 'PSA', 'HII', 'ROL', 'TTWO', 'RHI', 'PNR',
+                 'CTRA', 'EG', 'ALLE', 'NSC', 'DE', 'VZ', 'EMN', 'BAC', 'VRTX', 'UPS', 'UHS', 'CLX', 
+                 'STT', 'TXN', 'T', 'PH', 'EOG', 'COO', 'ETN', 'NVR', 'BIIB', 'HST', 'TYL', 'MS',
+                 'TXT', 'MKC', 'FIS', 'PFE', 'GRMN', 'PSX', 'CPAY', 'INCY', 'AMGN', 'TT', 'FDX', 'JCI',
+                 'KVUE', 'GPC', 'LKQ', 'COF', 'MAS', 'MOH', 'D', 'CNC', 'AMT', 'EQIX', 'IT', 'GE', 'HES',
+                 'CDNS', 'PNC', 'KIM', 'TROW', 'PLD', 'CCI', 'JBHT', 'INTU', 'PGR', 'HUBB', 'VTR', 'SBUX',
+                 'DPZ', 'BKNG', 'DVN', 'VTRS', 'ES', 'IPG', 'HWM', 'SLB', 'DD', 'DLR', 'EBAY', 'VLTO', 
+                 'ZTS', 'ADSK', 'IQV', 'DIS', 'NKE', 'NRG', 'MPC', 'KEYS', 'ISRG', 'CBRE', 'ADI', 'SNPS',
+                 'NUE', 'HAL', 'CE', 'A', 'GPN', 'SYF', 'WRK', 'BAX', 'VLO', 'CAT', 'HBAN', 'APD', 'LYV', 
+                  'TFX', 'CI', 'HRL', 'GOOGL', 'BEN', 'NTRS', 'MSCI', 'WYNN', 'NEE', 'EW', 
+                 'PWR', 'BALL', 'CARR', 'POOL', 'STLD', 'CF', 'DOC', 'HPQ', 'IP', 'CHRW', 'MMM', 'GM', 'DAL', 
+                 'LVS', 'MRO', 'IDXX', 'SBAC', 'BBY', 'CSGP', 'JNPR', 'ULTA', 'SCHW', 'TRMB', 'MTB', 'NTAP',
+                 'FICO', 'BIO', 'WAT', 'EFX', 'LLY', 'ANSS', 'RL', 'WST', 'LEN', 'NOW', 'ROK', 'GEHC', 'HPE',
+                 'QCOM', 'NXPI', 'DLTR', 'PHM', 'CTVA', 'SWK', 'TFC', 'BX', 'BA', 'DHI', 'RF', 'FITB', 'CVS',
+                 'USB', 'SWKS', 'RVTY', 'EXR', 'CRL', 'MGM', 'ODFL', 'MTD', 'STX', 'RCL', 'ADBE', 'EQT', 'IVZ',
+                 'APA', 'LW', 'BWA', 'KLAC', 'MCHP', 'ORCL', 'AXON', 'TGT', 'GEN', 'HUM', 'MHK',  'TPR',
+                 'AMAT', 'F', 'ADM', 'LRCX', 'MOS', 'HAS', 'IFF', 'ARE', 'VST', 'CRM', 'LULU', 'WDC', 'ABNB', 
+                 'FCX', 'TER', 'DAY', 'APTV', 'UBER', 'AVGO', 'CEG', 'CFG', 'NEM', 'CHTR', 'DG', 'NFLX',
+                 'DFS', 'DVA', 'PYPL', 'LUV', 'META', 'AES', 'URI', 'MKTX', 'MU', 'MTCH', 'SOLV', 'BBWI', 'KMX',
+                 'DECK', 'WBA', 'CMA', 'AAL', 'UAL', 'KEY', 'INTC', 'RMD', 'CTLT', 'ILMN', 'ZBRA', 'DXCM', 'BXP',
+                 'FTNT', 'JBL', 'MPWR', 'CZR', 'ANET', 'EL', 'NVDA', 'PODD', 'EXPE', 'ON', 'BLDR', 'FMC', 'ALGN',
+                 'CCL', 'AMD', 'ETSY', 'EPAM', 'FSLR', 'PANW', 'GNRC', 'WBD', 'TSLA', 'NCLH', 'ALB', 'PAYC', 'GEV',
+                 'MRNA', 'PARA', 'ENPH', 'GL', 'SMCI', 'BRK.B', 'BF.B']   
 #'CDW', 'VLO','PG','PH','HD','TDG'
 #BEST: 'XOM', 'GE' 
+
 confu_level= 75
-confi_level = 75
-roc_level = 0
+confi_level = 0
+roc_level = 60
 min_num = 1
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\05-26-23.txt'
+filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\07-01-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-for tick in sp500_tickers:
+for tick in ticker_list:
     try:
         stock = yf.Ticker(tick)
         #analyst ratings
         file_path_sent = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\StockerVS\AISTOCK\Analyst_sent.txt'
         analyst_mp = {}
-        with open(file_path_sent,'r') as file:
+        with open(file_path_sent,'r') as file: 
             for line in file:
                 key, value = line.strip().split(',')
                 analyst_mp[key] = float(value)
@@ -298,29 +340,39 @@ for tick in sp500_tickers:
             pipeline = Pipeline([
                 ('classifier', RandomForestClassifier(random_state=42))
             ])
+  
+
             param_grid = {
-                'classifier__n_estimators': [30, 50, 100],
-                'classifier__max_depth': [3 ,5, 7],
+                'classifier__n_estimators': [15, 30, 50,],
+                'classifier__max_depth': [3 ,5, 7, 10, 15],
                 'classifier__min_samples_split': [2, 5, 10, 15],
-                'classifier__min_samples_leaf': [ 3, 7, 10, 15],
+                'classifier__min_samples_leaf': [2, 3, 7, 10, 15],
                 'classifier__max_features': ['sqrt', 'log2'],
                 'classifier__bootstrap': [True],
                 'classifier__criterion': ['gini', 'entropy'],
 
             }
+            
+            tpot_pipeline = make_pipeline(StandardScaler(), TPOTClassifier(generations=5, population_size=100, verbosity=1, scoring = 'f1', n_jobs= cores, random_state= 42))
             luist_2 = []
             luist4 = []
             custom_scorer = make_scorer(f1_score, zero_division=1)
             
             for i in list([5]):
-                grid_search = GridSearchCV(pipeline, param_grid, cv=KFold(n_splits= i), scoring=custom_scorer, n_jobs = cores, error_score=np.nan)
+                # grid_search = GridSearchCV(pipeline, param_grid, cv=KFold(n_splits= i), scoring=custom_scorer, n_jobs = cores, error_score=np.nan)
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", category=UndefinedMetricWarning)
-                    grid_search.fit(X_train, y_train)
-                    best_params = grid_search.best_params_
-                    best_estimator = grid_search.best_estimator_
-                    y_pred = best_estimator.predict(X_test)
-                    y_pred_val = best_estimator.predict(X_val)
+                    
+                    # grid_search.fit(X_train, y_train)
+                    # best_params = grid_search.best_params_
+                    # best_estimator = grid_search.best_estimator_ #initially with RFC
+                    # y_pred = best_estimator.predict(X_test)
+                    # y_pred_val = best_estimator.predict(X_val)
+                    # print(best_estimator)
+                    tpot_pipeline.fit(X_train, y_train)
+                    y_pred = tpot_pipeline.predict(X_test)
+                    y_pred_val = tpot_pipeline.predict(X_val)
+                    grid_search = tpot_pipeline
                     roc_auc = (roc_auc_score(y_test, y_pred) + roc_auc_score(y_val, y_pred_val)) / 2
 
                 #Confusion matrix
