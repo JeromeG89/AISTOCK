@@ -20,6 +20,7 @@ import warnings
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+from Collinearity import remove_HighCorrelation
 st =  time.time()
 import gc
 ticker_list_SG = ['BN4.SI', 'A17U.SI', 'C38U.SI', 'C09.SI', 'D05.SI', 'G13.SI', 'H78.SI', 'J36.SI', 'BN4.SI', 
@@ -185,9 +186,9 @@ for tick in ticker_list:
         anal_sent = anal_sent.drop_duplicates('Month', keep = 'last').reset_index(drop = True)
 
         #Earnings scraper
-        earnings = stock.get_earnings_dates(limit = 26)
-        earnings.index = earnings.index.strftime('%Y-%m-%d')
-        earnings = earnings['Reported EPS'].dropna()
+        # earnings = stock.get_earnings_dates(limit = 26)
+        # earnings.index = earnings.index.strftime('%Y-%m-%d')
+        # earnings = earnings['Reported EPS'].dropna()
         dict_list = []
         for K in range(min_num,max_num + 1):
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
@@ -308,10 +309,10 @@ for tick in ticker_list:
             df['Month'] = df.index.strftime('%Y-%m')
             df.index = df.index.strftime('%Y-%m-%d')
             index_holder = df.index
-            df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
-            df['Reported EPS'] = df['Reported EPS'].ffill()
+            # df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
+           # df['Reported EPS'] = df['Reported EPS'].ffill()
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
-            df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
+           # df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
 
             df = pd.merge(df, anal_sent, on = 'Month', how = 'left').drop('Month', axis = 1)
             df.index = index_holder
@@ -326,15 +327,23 @@ for tick in ticker_list:
                 sp500_daily_change.index = df.index
                 df["Feels_goodline"] = sp500_daily_change
                 
-            df.drop(['Open','High','Low', 'Volume'], axis = 1, inplace = True)
-            z = df[df['dir'] == 'insf'].copy()
-            z.drop(['dir','Adj Close'], inplace= True, axis = 1)
-            
+            df.drop(['Open','High','Low', 'Volume', 'Adj Close'], axis = 1, inplace = True)
             df.dropna(inplace = True)
+
+            df_y = df['dir']
+            df = remove_HighCorrelation(df.drop(['dir'], axis = 1))
+            df =  df.join(df_y)
+            
+            z = df[df['dir'] == 'insf'].copy()
+            z.drop(['dir'], inplace= True, axis = 1)
+            
             df.drop(index = z.index, inplace = True, axis = 0)
             y = df['dir']
             y = y.astype('int')
-            X = df.drop(['dir','Adj Close'], axis = 1)
+            X = df.drop(['dir'], axis = 1)
+            
+            
+            
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2 , shuffle = True, random_state= 42)
             input_shapes = [X_train.shape[0], X_test.shape[0]]
             tpot_pipeline = make_pipeline(StandardScaler(), TPOTClassifier(generations=10, population_size= 50, verbosity=1, scoring = 'f1', n_jobs= cores, random_state= 42))
@@ -373,7 +382,7 @@ for tick in ticker_list:
                 for j in range(len(scores['Prediction'])):
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{min_num + i}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
-    except:
+    except IndexError:
         print(f"{tick} Fail")
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
