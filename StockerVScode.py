@@ -76,56 +76,57 @@ sp500_daily_change = sp500_pct.mean(axis = 1)
  
 cores = 3
 min_num = 1
-ticker_list =   [ 
+ticker_list =   ['AMP', 'LH', 'CL', 'L', 'MMC', 'ROP', 'MCD', 'TMUS', 'WM', 'MA', 'COR', 
+                 'YUM', 'PM', 'TJX', 'JNJ', 'KMB', 'HON', 'ITW', 'ATO', 'PEP', 'FI', 'ICE', 'AME', 
                  'LIN', 'KMI', 'WMT', 'JPM', 'LMT', 'MDLZ', 'GD', 'OTIS', 'CHD', 'DUK', 'HIG', 'MO',
-                 'CSX',  'WMB', 'STZ', 'CME','MRK',  'ED', 'AMP', 'ABT', 
-                  'AIG',  'VRSN', 'SO', 'PEG',  'PPL', 'ABBV', 'CB', 
-                 'HOLX', 'BR', 'AVY', 'IEX',  'KDP', 'TRV', 'DRI', 'CNP', 'ADP', 'FE',
+                 'CSX', 'AJG', 'WMB', 'STZ', 'CME', 'APH', 'MRK', 'SYY', 'MSI', 'ED', 'AMP', 'ABT', 
+                 'VRSK', 'AIG', 'COST', 'VRSN', 'ECL', 'BRO', 'SO', 'PEG', 'LH', 'PPL', 'ABBV', 'CB', 
+                 'HOLX', 'BR', 'AVY', 'CTAS', 'IEX', 'MCK', 'KDP', 'TRV', 'DRI', 'CNP', 'ADP', 'FE',
                  'CSCO', 'KHC', 'EA', 'PAYX', 'SRE', 'MDT', 'CMS', 'PRU', 'GIS', 'OKE', 'CBOE', 'LNT',
-                 'HD', 'ETR', 'DGX', 'AFL', 'WEC', 'BK', 'JKHY', 'LYB', 'SPGI',  'XYL', 'DOV', 
-                 'EXPD', 'VICI', 'PPG', 'SHW', 'BSX', 'NI',  'DTE', 'MCO', 'BDX', 'O',
+                 'HD', 'ETR', 'DGX', 'AFL', 'WEC', 'BK', 'JKHY', 'LYB', 'SPGI', 'HLT', 'XYL', 'DOV', 
+                 'EXPD', 'VICI', 'PPG', 'ORLY', 'SHW', 'BSX', 'NI', 'LDOS', 'DTE', 'MCO', 'BDX', 'O',
                  'BLK', 'REGN', 'WRB', 'DOW', 'UNP', 'PFG', 'FDS', 'PTC', 'CPRT', 'EVRG', 'TEL', 'CVX', 
                  'HSY', 'AON', 'AVB', 'AAPL', 'FAST', 'INVH', 'MET', 'KR', 'PNW', 'WAB', 'AEP', 'REG', 
                  'TDG', 'VMC', 'K', 'CAG', 'NDSN', 'CTSH', 'IBM', 'SYK', 'AEE', 'PCG', 'FTV', 'XOM',
-                 'FFIV', 'EIX', 'EQR', 'GWW', 'WELL', 'ROST',  'EXC', 'PKG', 'AZO', 'J', 'TMO', 
+                 'FFIV', 'EIX', 'EQR', 'GWW', 'WELL', 'ROST', 'MSFT', 'EXC', 'PKG', 'AZO', 'J', 'TMO', 
                  'PCAR', 'NOC', 'ZBH', 'ACN', 'CINF', 'MNST', 'MAR', 'STE', 'LOW', 'AXP', 'CAH', 'HSIC',
                  'RJF', 'LHX', 'BMY', 'GS', 'FRT', 'CDW', 'ELV', 'WTW', 'NWSA', 'C', 'AOS', 'NWS', 'SJM',
                  'TRGP', 'WY', 'GLW', 'IR', 'SNA', 'MLM', 'EMR', 'CMCSA', 'GILD', 'FOX', 'TAP', 'AWK', 
-                 'AMCR', 'TSN', 'SPG', 'WFC',  'XEL', 'RTX', 'COP', 'UNH', 'OMC', 'ACGL', 'DHR', 
+                 'AMCR', 'TSN', 'SPG', 'WFC', 'MAA', 'XEL', 'RTX', 'COP', 'UNH', 'OMC', 'ACGL', 'DHR', 
                  'FOXA', 'CMG', 'BG', 'CMI', 'BKR', 'TSCO', 'TDY', 'HCA', 'AIZ', 'OXY', 'ALL', 'FANG', 
                  'CPB', 'UDR', 'AKAM', 'IRM', 'ESS', 'NDAQ', 'PSA', 'HII', 'ROL', 'TTWO', 'RHI', 'PNR',
                  'CTRA', 'EG', 'ALLE', 'NSC', 'DE', 'VZ', 'EMN', 'BAC', 'VRTX', 'UPS', 'UHS', 'CLX', 
-                 'STT', 'TXN', 'T', 'PH', 'EOG', 'COO', 'ETN', 'NVR', 'BIIB', 'HST', 'TYL', 'MS',
+                 'STT', 'TXN', 'T', 'PH', 'EOG', 'CPT', 'COO', 'ETN', 'NVR', 'BIIB', 'HST', 'TYL', 'MS',
                  'TXT', 'MKC', 'FIS', 'PFE', 'GRMN', 'PSX', 'CPAY', 'INCY', 'AMGN', 'TT', 'FDX', 'JCI',
                  'KVUE', 'GPC', 'LKQ', 'COF', 'MAS', 'MOH', 'D', 'CNC', 'AMT', 'EQIX', 'IT', 'GE', 'HES',
                  'CDNS', 'PNC', 'KIM', 'TROW', 'PLD', 'CCI', 'JBHT', 'INTU', 'PGR', 'HUBB', 'VTR', 'SBUX',
                  'DPZ', 'BKNG', 'DVN', 'VTRS', 'ES', 'IPG', 'HWM', 'SLB', 'DD', 'DLR', 'EBAY', 'VLTO', 
                  'ZTS', 'ADSK', 'IQV', 'DIS', 'NKE', 'NRG', 'MPC', 'KEYS', 'ISRG', 'CBRE', 'ADI', 'SNPS',
                  'NUE', 'HAL', 'CE', 'A', 'GPN', 'SYF', 'WRK', 'BAX', 'VLO', 'CAT', 'HBAN', 'APD', 'LYV', 
-                  'TFX', 'CI', 'HRL', 'GOOGL', 'BEN', 'NTRS', 'MSCI', 'WYNN', 'NEE', 'EW', 
+                 'GOOG', 'TFX', 'AMZN', 'CI', 'HRL', 'GOOGL', 'BEN', 'NTRS', 'MSCI', 'WYNN', 'NEE', 'EW', 
                  'PWR', 'BALL', 'CARR', 'POOL', 'STLD', 'CF', 'DOC', 'HPQ', 'IP', 'CHRW', 'MMM', 'GM', 'DAL', 
                  'LVS', 'MRO', 'IDXX', 'SBAC', 'BBY', 'CSGP', 'JNPR', 'ULTA', 'SCHW', 'TRMB', 'MTB', 'NTAP',
                  'FICO', 'BIO', 'WAT', 'EFX', 'LLY', 'ANSS', 'RL', 'WST', 'LEN', 'NOW', 'ROK', 'GEHC', 'HPE',
                  'QCOM', 'NXPI', 'DLTR', 'PHM', 'CTVA', 'SWK', 'TFC', 'BX', 'BA', 'DHI', 'RF', 'FITB', 'CVS',
                  'USB', 'SWKS', 'RVTY', 'EXR', 'CRL', 'MGM', 'ODFL', 'MTD', 'STX', 'RCL', 'ADBE', 'EQT', 'IVZ',
-                 'APA', 'LW', 'BWA', 'KLAC', 'MCHP', 'ORCL', 'AXON', 'TGT', 'GEN', 'HUM', 'MHK',  'TPR',
+                 'APA', 'LW', 'BWA', 'KLAC', 'MCHP', 'ORCL', 'AXON', 'TGT', 'GEN', 'HUM', 'MHK', 'QRVO', 'TPR',
                  'AMAT', 'F', 'ADM', 'LRCX', 'MOS', 'HAS', 'IFF', 'ARE', 'VST', 'CRM', 'LULU', 'WDC', 'ABNB', 
-                 'FCX', 'TER', 'DAY', 'APTV', 'UBER', 'AVGO', 'CEG', 'CFG', 'NEM', 'CHTR', 'DG', 'NFLX',
+                 'FCX', 'TER', 'DAY', 'APTV', 'UBER', 'AVGO', 'CEG', 'CFG', 'NEM', 'CHTR', 'DG', 'TECH', 'NFLX',
                  'DFS', 'DVA', 'PYPL', 'LUV', 'META', 'AES', 'URI', 'MKTX', 'MU', 'MTCH', 'SOLV', 'BBWI', 'KMX',
                  'DECK', 'WBA', 'CMA', 'AAL', 'UAL', 'KEY', 'INTC', 'RMD', 'CTLT', 'ILMN', 'ZBRA', 'DXCM', 'BXP',
                  'FTNT', 'JBL', 'MPWR', 'CZR', 'ANET', 'EL', 'NVDA', 'PODD', 'EXPE', 'ON', 'BLDR', 'FMC', 'ALGN',
                  'CCL', 'AMD', 'ETSY', 'EPAM', 'FSLR', 'PANW', 'GNRC', 'WBD', 'TSLA', 'NCLH', 'ALB', 'PAYC', 'GEV',
-                 'MRNA', 'PARA', 'ENPH', 'GL', 'SMCI', 'BRK.B', 'BF.B']   
+                 'MRNA', 'PARA', 'ENPH', 'GL', 'SMCI', 'BRK.B', 'BF.B']
 #'CDW', 'VLO','PG','PH','HD','TDG'
 #BEST: 'XOM', 'GE' 
 
-confu_level= 75
+confu_level= 0.75
 confi_level = 0
-roc_level = 60
+roc_level = 0.6
 min_num = 1
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\07-01-24.txt'
+filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\TEST2.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
 for tick in ticker_list:
@@ -187,7 +188,7 @@ for tick in ticker_list:
         earnings = stock.get_earnings_dates(limit = 26)
         earnings.index = earnings.index.strftime('%Y-%m-%d')
         earnings = earnings['Reported EPS'].dropna()
-        luist3 = []
+        dict_list = []
         for K in range(min_num,max_num + 1):
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
             data_old = stock.history(period = '62mo', interval ='1wk', auto_adjust = False)
@@ -326,7 +327,7 @@ for tick in ticker_list:
                 df["Feels_goodline"] = sp500_daily_change
                 
             df.drop(['Open','High','Low', 'Volume'], axis = 1, inplace = True)
-            z = df.loc[((df['dir'].loc[df['dir'] == 'insf']).index)]
+            z = df[df['dir'] == 'insf'].copy()
             z.drop(['dir','Adj Close'], inplace= True, axis = 1)
             
             df.dropna(inplace = True)
@@ -334,77 +335,44 @@ for tick in ticker_list:
             y = df['dir']
             y = y.astype('int')
             X = df.drop(['dir','Adj Close'], axis = 1)
-            X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=0.222, shuffle = True, random_state=42)
-            X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=0.285, shuffle = True, random_state=42)
-            input_shapes = [X_train.shape[0], X_val.shape[0], X_test.shape[0]]
-            pipeline = Pipeline([
-                ('classifier', RandomForestClassifier(random_state=42))
-            ])
-  
-
-            param_grid = {
-                'classifier__n_estimators': [15, 30, 50,],
-                'classifier__max_depth': [3 ,5, 7, 10, 15],
-                'classifier__min_samples_split': [2, 5, 10, 15],
-                'classifier__min_samples_leaf': [2, 3, 7, 10, 15],
-                'classifier__max_features': ['sqrt', 'log2'],
-                'classifier__bootstrap': [True],
-                'classifier__criterion': ['gini', 'entropy'],
-
-            }
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2 , shuffle = True, random_state= 42)
+            input_shapes = [X_train.shape[0], X_test.shape[0]]
+            tpot_pipeline = make_pipeline(StandardScaler(), TPOTClassifier(generations=10, population_size= 50, verbosity=1, scoring = 'f1', n_jobs= cores, random_state= 42))
+            tpot_pipeline.fit(X_train, y_train)
             
-            tpot_pipeline = make_pipeline(StandardScaler(), TPOTClassifier(generations=5, population_size=100, verbosity=1, scoring = 'f1', n_jobs= cores, random_state= 42))
-            luist_2 = []
-            luist4 = []
-            custom_scorer = make_scorer(f1_score, zero_division=1)
-            
-            for i in list([5]):
-                # grid_search = GridSearchCV(pipeline, param_grid, cv=KFold(n_splits= i), scoring=custom_scorer, n_jobs = cores, error_score=np.nan)
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore", category=UndefinedMetricWarning)
-                    
-                    # grid_search.fit(X_train, y_train)
-                    # best_params = grid_search.best_params_
-                    # best_estimator = grid_search.best_estimator_ #initially with RFC
-                    # y_pred = best_estimator.predict(X_test)
-                    # y_pred_val = best_estimator.predict(X_val)
-                    # print(best_estimator)
-                    tpot_pipeline.fit(X_train, y_train)
-                    y_pred = tpot_pipeline.predict(X_test)
-                    y_pred_val = tpot_pipeline.predict(X_val)
-                    grid_search = tpot_pipeline
-                    roc_auc = (roc_auc_score(y_test, y_pred) + roc_auc_score(y_val, y_pred_val)) / 2
+            y_pred = tpot_pipeline.predict(X_test)
+            score_dict = {}
+            roc_auc = roc_auc_score(y_test, y_pred)
+            score_dict['ROC'] = round(roc_auc, 3)
+            tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+            if tp == 0:
+                tp_rate = 0
+            else:
+                tp_rate = (tp)/(fp + tp)
+            if tn == 0:
+                tn_rate = 0
+            else:    
+                tn_rate = (tn)/(fn + tn)
+            train_score = tpot_pipeline.score(X_train, y_train)
+            test_score = tpot_pipeline.score(X_test, y_test)
 
-                #Confusion matrix
-                tn, fp, fn, tp = confusion_matrix(y_test,grid_search.predict(X_test)).ravel()
-                tn_val, fp_val, fn_val, tp_val = confusion_matrix(y_val,grid_search.predict(X_val)).ravel()
-                if tp == 0 or tp_val == 0:
-                    tp_rate = 0
-                else:
-                    tp_rate = ((tp + tp_val)/(fp + fp_val + tp + tp_val)) *100 
-                if tn == 0 or tn_val == 0:
-                    tn_rate = 0
-                else:    
-                    tn_rate = ((tn + tn_val)/(fn + fn_val + tn + tn_val)) * 100
-                if (len(np.unique(np.array(grid_search.predict(X_train)))) == 2):  
-                    luist_2.append([grid_search.score(X_train,y_train)*100, grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100, grid_search.predict(z), list(enumerate([round(tn_rate, 1), round(tp_rate, 1)])), [tn + tn_val, fn + fn_val, tp + tp_val, fp + fp_val], round(roc_auc,2)])
-                else:
-                    luist_2.append([grid_search.score(X_train,y_train)*100,grid_search.score(X_val,y_val)*100, grid_search.score(X_test,y_test)*100,np.nan, list(enumerate([round(tn_rate, 1),  round(tp_rate, 1)])),  [tn + tn_val, fn + fn_val, tp + tp_val, fp + fp_val ], round(roc_auc,2)])
-            for i in range(len(luist_2)):
-                luist4.append(luist_2[i][1])
-            luist3.append(luist_2[luist4.index(max(luist4))])
-        for i in range(len(luist3)):
-            print(tick, ":","For K =", i + min_num , "prediction:", luist3[i][3], "Confidence", round(luist3[i][0],0), " / ",round(luist3[i][1],0)," / ",round(luist3[i][2],0), "Prices:", list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3)), "Shape:", list(input_shapes), luist3[i][4], luist3[i][5], 'Roc_Auc: ', round(luist3[i][6], 2)) 
-            mp_con = {0: luist3[i][4][0][1], 1: luist3[i][4][1][1]}
-            try:
-                for j in range(len(luist3[i][3])):
-                    if luist3[i][1] >= confi_level and luist3[i][2] >= confi_level and (luist3[i][2] + luist3[i][1])/2 >= confi_level and mp_con.get(luist3[i][3][j], 0) >= confu_level and roc_auc >= roc_level / 100:
-                        with open(filepath, 'a') as file:
-                            file.write(f"{tick}, {df_new_p.index[-(len(luist3[i][3]) - j)].month}/{df_new_p.index[-(len(luist3[i][3]) - j)].day}/{df_new_p.index[-(len(luist3[i][3]) - j)].year}, ,{min_num + i}, {mp_tut.get(luist3[i][3][j])}, , , , {round(luist3[i][0], 1)/ 100}, {round(luist3[i][1], 1) / 100}, {round(luist3[i][2], 1) / 100}, {round(mp_con.get(luist3[i][3][j], 0) / 100, 3)}, {round(luist3[i][6],2)}\n")
-            except:
-                pass
-        pd.DataFrame()
-        gc.collect()
+            score_dict['Train_score'] = round(train_score,3)
+            score_dict['Test_score'] = round(test_score,3)
+
+            score_dict['1'] = round(tp_rate, 3)
+            score_dict['0'] = round(tn_rate, 3)
+            score_dict['Prediction'] = tpot_pipeline.predict(z)
+            score_dict['date'] = z.index
+            dict_list.append(score_dict)
+        with open(filepath, 'a') as file:
+            for i in range(len(dict_list)):
+                scores = dict_list[i]
+                mp_tut = {1: 'Long', 0: 'Short'}
+                n_predictions = len(scores['Prediction'])
+                print(f"{tick}: For K = {i+min_num},prediction: {scores['Prediction']}, Confidence {scores['Train_score']}, / {scores['Test_score']}, Prices = {list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3))} Shape: {input_shapes}, [0:{scores['0']}, 1:{scores['1']}], AUC_ROC: {scores['ROC']}")
+                for j in range(len(scores['Prediction'])):
+                    if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
+                        file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{min_num + i}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
     except:
         print(f"{tick} Fail")
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
