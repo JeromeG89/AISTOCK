@@ -77,7 +77,7 @@ sp500_daily_change = sp500_pct.mean(axis = 1)
  
 cores = 3
 min_num = 1
-ticker_list =   ['AMP', 'LH', 'CL', 'L', 'MMC', 'ROP', 'MCD', 'TMUS', 'WM', 'MA', 'COR', 
+ticker_list =   ['MRK', 'MMC', 'NVDA', 'J', 'TJX', 'RSG', 'KO', 'V', 'PG', 'CL', 'L', 'MMC', 'ROP', 'MCD', 'TMUS', 'WM', 'MA', 'COR', 
                  'YUM', 'PM', 'TJX', 'JNJ', 'KMB', 'HON', 'ITW', 'ATO', 'PEP', 'FI', 'ICE', 'AME', 
                  'LIN', 'KMI', 'WMT', 'JPM', 'LMT', 'MDLZ', 'GD', 'OTIS', 'CHD', 'DUK', 'HIG', 'MO',
                  'CSX', 'AJG', 'WMB', 'STZ', 'CME', 'APH', 'MRK', 'SYY', 'MSI', 'ED', 'AMP', 'ABT', 
@@ -123,11 +123,11 @@ ticker_list =   ['AMP', 'LH', 'CL', 'L', 'MMC', 'ROP', 'MCD', 'TMUS', 'WM', 'MA'
 
 confu_level= 0.75
 confi_level = 0
-roc_level = 0.6
+roc_level = 0.7
 min_num = 1
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\TEST2.txt'
+filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\07-15-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
 for tick in ticker_list:
@@ -186,9 +186,9 @@ for tick in ticker_list:
         anal_sent = anal_sent.drop_duplicates('Month', keep = 'last').reset_index(drop = True)
 
         #Earnings scraper
-        # earnings = stock.get_earnings_dates(limit = 26)
-        # earnings.index = earnings.index.strftime('%Y-%m-%d')
-        # earnings = earnings['Reported EPS'].dropna()
+        earnings = stock.get_earnings_dates(limit = 26)
+        earnings.index = earnings.index.strftime('%Y-%m-%d')
+        earnings = earnings['Reported EPS'].dropna()
         dict_list = []
         for K in range(min_num,max_num + 1):
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
@@ -309,10 +309,10 @@ for tick in ticker_list:
             df['Month'] = df.index.strftime('%Y-%m')
             df.index = df.index.strftime('%Y-%m-%d')
             index_holder = df.index
-            # df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
-           # df['Reported EPS'] = df['Reported EPS'].ffill()
+            df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
+            df['Reported EPS'] = df['Reported EPS'].ffill()
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
-           # df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
+            df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
 
             df = pd.merge(df, anal_sent, on = 'Month', how = 'left').drop('Month', axis = 1)
             df.index = index_holder
@@ -382,9 +382,9 @@ for tick in ticker_list:
                 for j in range(len(scores['Prediction'])):
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{min_num + i}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
-    except IndexError:
+    except:
         print(f"{tick} Fail")
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
-print("Time elapsed = ", round((et-st)/60,2), "Mins")
+print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
 print(1)
