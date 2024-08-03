@@ -12,7 +12,7 @@ from sklearn.metrics import make_scorer, f1_score, confusion_matrix, roc_auc_sco
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.ensemble import RandomForestClassifier
 
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from tpot import TPOTClassifier
 from sklearn.pipeline import make_pipeline
 import warnings
@@ -77,14 +77,7 @@ sp500_daily_change = sp500_pct.mean(axis = 1)
  
 cores = 3
 min_num = 1
-ticker_list =   ['MRK', 'MMC', 'NVDA', 'J', 'TJX', 'RSG', 'KO', 'V', 'PG', 'CL', 'L', 'MMC', 'ROP', 'MCD', 'TMUS', 'WM', 'MA', 'COR', 
-                 'YUM', 'PM', 'TJX', 'JNJ', 'KMB', 'HON', 'ITW', 'ATO', 'PEP', 'FI', 'ICE', 'AME', 
-                 'LIN', 'KMI', 'WMT', 'JPM', 'LMT', 'MDLZ', 'GD', 'OTIS', 'CHD', 'DUK', 'HIG', 'MO',
-                 'CSX', 'AJG', 'WMB', 'STZ', 'CME', 'APH', 'MRK', 'SYY', 'MSI', 'ED', 'AMP', 'ABT', 
-                 'VRSK', 'AIG', 'COST', 'VRSN', 'ECL', 'BRO', 'SO', 'PEG', 'LH', 'PPL', 'ABBV', 'CB', 
-                 'HOLX', 'BR', 'AVY', 'CTAS', 'IEX', 'MCK', 'KDP', 'TRV', 'DRI', 'CNP', 'ADP', 'FE',
-                 'CSCO', 'KHC', 'EA', 'PAYX', 'SRE', 'MDT', 'CMS', 'PRU', 'GIS', 'OKE', 'CBOE', 'LNT',
-                 'HD', 'ETR', 'DGX', 'AFL', 'WEC', 'BK', 'JKHY', 'LYB', 'SPGI', 'HLT', 'XYL', 'DOV', 
+ticker_list =   [ 'PH', 'XOM', 'LYB', 'SPGI', 'HLT', 'XYL', 'DOV', 
                  'EXPD', 'VICI', 'PPG', 'ORLY', 'SHW', 'BSX', 'NI', 'LDOS', 'DTE', 'MCO', 'BDX', 'O',
                  'BLK', 'REGN', 'WRB', 'DOW', 'UNP', 'PFG', 'FDS', 'PTC', 'CPRT', 'EVRG', 'TEL', 'CVX', 
                  'HSY', 'AON', 'AVB', 'AAPL', 'FAST', 'INVH', 'MET', 'KR', 'PNW', 'WAB', 'AEP', 'REG', 
@@ -127,11 +120,12 @@ roc_level = 0.7
 min_num = 1
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\07-15-24.txt'
+filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\07-29-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-for tick in ticker_list:
+for tick in ['NVDA', 'AMD', 'VOO', 'MRK']:
     try:
+        
         stock = yf.Ticker(tick)
         #analyst ratings
         file_path_sent = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\StockerVS\AISTOCK\Analyst_sent.txt'
@@ -190,14 +184,21 @@ for tick in ticker_list:
         earnings.index = earnings.index.strftime('%Y-%m-%d')
         earnings = earnings['Reported EPS'].dropna()
         dict_list = []
+        
         for K in range(min_num,max_num + 1):
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
             data_old = stock.history(period = '62mo', interval ='1wk', auto_adjust = False)
+            encoder = OneHotEncoder(drop = 'first', sparse_output = False)
             def Prep(df, old):
                 df = df.drop('Close', axis = 1, inplace = False)
                 df['Dividends'] = df['Dividends']/df['Adj Close']
                 if old == True:
                     df = df.loc[~df.index.isin(data_new.index)]
+                df['Month'] = df.index.month
+                encoded_months = encoder.fit_transform(df[['Month']])
+                encoded_months_df = pd.DataFrame(encoded_months, columns= encoder.get_feature_names_out(['Month']))
+                encoded_months_df.index = df.index
+                df = df.drop(columns = ['Month']).join(encoded_months_df)
                 return df
             df_new_p = Prep(data_new, old = False).copy()
             df_old_p = Prep(data_old, old = True).copy()
@@ -387,4 +388,4 @@ for tick in ticker_list:
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
 print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
-print(1)
+print(1) 
