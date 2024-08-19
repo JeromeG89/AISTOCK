@@ -117,10 +117,10 @@ ticker_list =   [ 'PH', 'XOM', 'LYB', 'SPGI', 'HLT', 'XYL', 'DOV',
 confu_level= 0.75
 confi_level = 0
 roc_level = 0.7
-min_num = 1
+min_num = 4
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = 'Logs\07-29-24.txt'
+filepath = r'Logs\07-29-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
 for tick in ['NKE']: #iterates through each ticker available in the list of tickers
@@ -383,7 +383,7 @@ for tick in ['NKE']: #iterates through each ticker available in the list of tick
                 for j in range(len(scores['Prediction'])):
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{min_num + i}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
-    except IndexError:
+    except:
         print(f"{tick} Fail")
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
