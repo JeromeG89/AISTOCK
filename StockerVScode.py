@@ -75,7 +75,7 @@ sp500_pct[sp500_pct < 0] = -1
 sp500_daily_change = sp500_pct.mean(axis = 1)
 
  
-cores = 3
+cores = 1
 min_num = 1
 ticker_list =   [ 'PH', 'XOM', 'LYB', 'SPGI', 'HLT', 'XYL', 'DOV', 
                  'EXPD', 'VICI', 'PPG', 'ORLY', 'SHW', 'BSX', 'NI', 'LDOS', 'DTE', 'MCO', 'BDX', 'O',
@@ -120,15 +120,15 @@ roc_level = 0.7
 min_num = 1
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\AI_STOCKS_LOG\07-29-24.txt'
+filepath = 'Logs\07-29-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-for tick in ['NVDA', 'AMD', 'VOO', 'MRK']:
+for tick in ['NKE']: #iterates through each ticker available in the list of tickers
     try:
         
         stock = yf.Ticker(tick)
         #analyst ratings
-        file_path_sent = r'C:\Users\Jerome\Desktop\Jerome_Ground\Stocker_Git\StockerVS\AISTOCK\Analyst_sent.txt'
+        file_path_sent = 'Analyst_sent.txt'
         analyst_mp = {}
         with open(file_path_sent,'r') as file: 
             for line in file:
@@ -185,7 +185,7 @@ for tick in ['NVDA', 'AMD', 'VOO', 'MRK']:
         earnings = earnings['Reported EPS'].dropna()
         dict_list = []
         
-        for K in range(min_num,max_num + 1):
+        for K in range(min_num,max_num + 1): #iterates through each num of weeks for ticker, from min_num to max_num inclusive, week n with n + K
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
             data_old = stock.history(period = '62mo', interval ='1wk', auto_adjust = False)
             encoder = OneHotEncoder(drop = 'first', sparse_output = False)
@@ -383,7 +383,7 @@ for tick in ['NVDA', 'AMD', 'VOO', 'MRK']:
                 for j in range(len(scores['Prediction'])):
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{min_num + i}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
-    except:
+    except IndexError:
         print(f"{tick} Fail")
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
