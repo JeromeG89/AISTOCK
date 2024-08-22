@@ -75,7 +75,7 @@ sp500_pct[sp500_pct < 0] = -1
 sp500_daily_change = sp500_pct.mean(axis = 1)
 
  
-cores = 1
+cores = 3
 min_num = 1
 ticker_list =   [ 'PH', 'XOM', 'LYB', 'SPGI', 'HLT', 'XYL', 'DOV', 
                  'EXPD', 'VICI', 'PPG', 'ORLY', 'SHW', 'BSX', 'NI', 'LDOS', 'DTE', 'MCO', 'BDX', 'O',
@@ -113,7 +113,7 @@ ticker_list =   [ 'PH', 'XOM', 'LYB', 'SPGI', 'HLT', 'XYL', 'DOV',
                  'MRNA', 'PARA', 'ENPH', 'GL', 'SMCI', 'BRK.B', 'BF.B']
 #'CDW', 'VLO','PG','PH','HD','TDG'
 #BEST: 'XOM', 'GE' 
-
+failed = []
 confu_level= 0.75
 confi_level = 0
 roc_level = 0.7
@@ -385,7 +385,8 @@ for tick in ['NKE']: #iterates through each ticker available in the list of tick
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{min_num + i}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
     except:
         print(f"{tick} Fail")
+        failed.append(tick)
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
 print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
-print(1) 
+print(failed) 
