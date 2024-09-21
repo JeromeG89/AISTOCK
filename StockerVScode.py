@@ -120,15 +120,20 @@ roc_level = 0.7
 min_num = 4
 max_num = 4
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'Logs\07-29-24.txt'
+filepath = r'..\Logs\09-16-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-for tick in ['NKE']: #iterates through each ticker available in the list of tickers
+for tick in ['GD', 'GE', 'FI', 'BRO', 'PM','LMT','HIG','MMC','KO','MDLZ','CL','CNP','PEG',
+             'CB','CI','ABT','PAYX','AME','KHC','ABBV','MRK','SPGI','TMUS',
+             'LH','CTAS','MSI','GIS','WMT','PPL','ICE','PG','VRSK','CHD','DUK',
+             'AMP','BKNG','TRV','AVY','SYY','RSG','ETN','CPT','CME','MCD','LNT',
+             'KMI','MO','JKHY','COR','XYL','WEC','CSX','TJX','CSCO','ADP','MA',
+             'SO','ADBE','AZO','MSCI','SNPS','ETR','ROST','IQV','J','CMS','AFL']: #iterates through each ticker available in the list of tickers
     try:
         
         stock = yf.Ticker(tick)
         #analyst ratings
-        file_path_sent = 'Analyst_sent.txt'
+        file_path_sent = r'Analyst_sent.txt'
         analyst_mp = {}
         with open(file_path_sent,'r') as file: 
             for line in file:
@@ -383,7 +388,7 @@ for tick in ['NKE']: #iterates through each ticker available in the list of tick
                 for j in range(len(scores['Prediction'])):
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{min_num + i}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
-    except:
+    except IndexError:
         print(f"{tick} Fail")
         failed.append(tick)
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
