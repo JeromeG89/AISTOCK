@@ -68,6 +68,7 @@ sp500_tickers = ['RSG', 'KO', 'V', 'PG', 'CL', 'L', 'MMC', 'ROP', 'MCD', 'TMUS',
                  'CCL', 'AMD', 'ETSY', 'EPAM', 'FSLR', 'PANW', 'GNRC', 'WBD', 'TSLA', 'NCLH', 'ALB', 'PAYC', 'GEV',
                  'MRNA', 'PARA', 'ENPH', 'GL', 'SMCI', 'BRK.B', 'BF.B']
 sp500 = yf.download(sp500_tickers,period = '62mo', interval = "1wk", )
+vix = yf.Ticker('^VIX').history(period = '62mo',interval = "1wk",  )
 sp500.drop(["Open", "High", "Low", "Close", "Volume"], axis = 1, inplace = True)
 sp500_pct = sp500.pct_change().fillna(0)
 sp500_pct[sp500_pct > 0] = 1
@@ -117,20 +118,14 @@ failed = []
 confu_level= 0.75
 confi_level = 0
 roc_level = 0.7
-min_num = 4
-max_num = 4
+min_num = 2
+max_num = 8
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'..\Logs\09-16-24.txt'
+filepath = r'Logs\10-21-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-for tick in ['GD', 'GE', 'FI', 'BRO', 'PM','LMT','HIG','MMC','KO','MDLZ','CL','CNP','PEG',
-             'CB','CI','ABT','PAYX','AME','KHC','ABBV','MRK','SPGI','TMUS',
-             'LH','CTAS','MSI','GIS','WMT','PPL','ICE','PG','VRSK','CHD','DUK',
-             'AMP','BKNG','TRV','AVY','SYY','RSG','ETN','CPT','CME','MCD','LNT',
-             'KMI','MO','JKHY','COR','XYL','WEC','CSX','TJX','CSCO','ADP','MA',
-             'SO','ADBE','AZO','MSCI','SNPS','ETR','ROST','IQV','J','CMS','AFL']: #iterates through each ticker available in the list of tickers
+for tick in ['ABBV','ADBE','ICE','TJX','JKHY','PPL','WEC','GIS','CSX','KMI','SO','MSCI','WMT','DUK','CI','SPGI','CMS','ECL','MRK','ETR','ATO','PAYX','BK','GE']:
     try:
-        
         stock = yf.Ticker(tick)
         #analyst ratings
         file_path_sent = r'Analyst_sent.txt'
@@ -188,9 +183,10 @@ for tick in ['GD', 'GE', 'FI', 'BRO', 'PM','LMT','HIG','MMC','KO','MDLZ','CL','C
         earnings = stock.get_earnings_dates(limit = 26)
         earnings.index = earnings.index.strftime('%Y-%m-%d')
         earnings = earnings['Reported EPS'].dropna()
+        
         dict_list = []
         
-        for K in range(min_num,max_num + 1): #iterates through each num of weeks for ticker, from min_num to max_num inclusive, week n with n + K
+        for K in range(min_num,max_num + 1, 2): #iterates through each num of weeks for ticker, from min_num to max_num inclusive, week n with n + K
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
             data_old = stock.history(period = '62mo', interval ='1wk', auto_adjust = False)
             encoder = OneHotEncoder(drop = 'first', sparse_output = False)
@@ -329,9 +325,13 @@ for tick in ['GD', 'GE', 'FI', 'BRO', 'PM','LMT','HIG','MMC','KO','MDLZ','CL','C
                 newp500_daily_change = sp500_daily_change.drop(index = sp500_daily_change.index[:len_dif], axis = 0, inplace = False)
                 newp500_daily_change.index = df.index
                 df["Feels_goodline"] = newp500_daily_change
+                
             else:
                 sp500_daily_change.index = df.index
                 df["Feels_goodline"] = sp500_daily_change
+
+            df['vix'] = vix.iloc[-len(df):]['Close'].values
+
                 
             df.drop(['Open','High','Low', 'Volume', 'Adj Close'], axis = 1, inplace = True)
             df.dropna(inplace = True)
@@ -378,16 +378,17 @@ for tick in ['GD', 'GE', 'FI', 'BRO', 'PM','LMT','HIG','MMC','KO','MDLZ','CL','C
             score_dict['0'] = round(tn_rate, 3)
             score_dict['Prediction'] = tpot_pipeline.predict(z)
             score_dict['date'] = z.index
+            score_dict['k_val'] = K
             dict_list.append(score_dict)
         with open(filepath, 'a') as file:
             for i in range(len(dict_list)):
                 scores = dict_list[i]
                 mp_tut = {1: 'Long', 0: 'Short'}
                 n_predictions = len(scores['Prediction'])
-                print(f"{tick}: For K = {i+min_num},prediction: {scores['Prediction']}, Confidence {scores['Train_score']}, / {scores['Test_score']}, Prices = {list(round(df_new_p.iloc[-(i+ min_num):]['Adj Close'], 3))} Shape: {input_shapes}, [0:{scores['0']}, 1:{scores['1']}], AUC_ROC: {scores['ROC']}")
+                print(f"{tick}: For K = {scores['k_val']},prediction: {scores['Prediction']}, Confidence {scores['Train_score']}, / {scores['Test_score']}, Prices = {list(round(df_new_p.iloc[-(scores['k_val']):]['Adj Close'], 3))} Shape: {input_shapes}, [0:{scores['0']}, 1:{scores['1']}], AUC_ROC: {scores['ROC']}")
                 for j in range(len(scores['Prediction'])):
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
-                        file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{min_num + i}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
+                        file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{scores['k_val']}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
     except IndexError:
         print(f"{tick} Fail")
         failed.append(tick)
