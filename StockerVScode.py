@@ -20,9 +20,12 @@ import warnings
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
+from ManualEarnings import getEarnings
+
 from Collinearity import remove_HighCorrelation
 st =  time.time()
 import gc
+
 ticker_list_SG = ['BN4.SI', 'A17U.SI', 'C38U.SI', 'C09.SI', 'D05.SI', 'G13.SI', 'H78.SI', 'J36.SI', 'BN4.SI', 
                   'ME8U.SI', 'M44U.SI', 'S58.SI', 'U96.SI', 'C6L.SI','Z74.SI', 'S68.SI', 'S63.SI', 'Y92.SI', 
                   'U11.SI', 'U14.SI', 'V03.SI', 'F34.SI', 'BS6.SI', 'BUOU.SI', 'EMI.SI', 'S51.SI']
@@ -121,10 +124,10 @@ roc_level = 0.7
 min_num = 2
 max_num = 8
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'Logs\10-21-24.txt'
+filepath = r'Logs\25-11-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
-
-for tick in ['ABBV','ADBE','ICE','TJX','JKHY','PPL','WEC','GIS','CSX','KMI','SO','MSCI','WMT','DUK','CI','SPGI','CMS','ECL','MRK','ETR','ATO','PAYX','BK','GE']:
+# random.shuffle(sp500_tickers)
+for tick in ['FI','MDLZ','MSI','CNP','KMI','BKNG','CHD','HIG','LH','BRO','WMT','PM','TRV','AME','CTAS','PEG','JKHY','ABT']:
     try:
         stock = yf.Ticker(tick)
         #analyst ratings
@@ -180,9 +183,14 @@ for tick in ['ABBV','ADBE','ICE','TJX','JKHY','PPL','WEC','GIS','CSX','KMI','SO'
         anal_sent = anal_sent.drop_duplicates('Month', keep = 'last').reset_index(drop = True)
 
         #Earnings scraper
-        earnings = stock.get_earnings_dates(limit = 26)
-        earnings.index = earnings.index.strftime('%Y-%m-%d')
-        earnings = earnings['Reported EPS'].dropna()
+        try:
+            earnings = stock.get_earnings_dates(limit = 26)
+            earnings.index = earnings.index.strftime('%Y-%m-%d')
+            earnings = earnings['Reported EPS'].dropna()
+        except KeyError:
+            earnings = getEarnings(tick)
+        
+        
         
         dict_list = []
         
@@ -315,7 +323,7 @@ for tick in ['ABBV','ADBE','ICE','TJX','JKHY','PPL','WEC','GIS','CSX','KMI','SO'
             df['Reported EPS'] = df['Reported EPS'].ffill()
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
             df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
-
+ 
             df = pd.merge(df, anal_sent, on = 'Month', how = 'left').drop('Month', axis = 1)
             df.index = index_holder
             df[['mp_raw', 'mp_change']] = df[['mp_raw', 'mp_change']].ffill()
@@ -332,7 +340,8 @@ for tick in ['ABBV','ADBE','ICE','TJX','JKHY','PPL','WEC','GIS','CSX','KMI','SO'
 
             df['vix'] = vix.iloc[-len(df):]['Close'].values
 
-                
+            print(df) #For debugging
+            
             df.drop(['Open','High','Low', 'Volume', 'Adj Close'], axis = 1, inplace = True)
             df.dropna(inplace = True)
 
