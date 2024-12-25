@@ -3,13 +3,13 @@ from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import numpy as np
 
-def remove_HighCorrelation(X):
+def remove_HighCorrelation(X, threshold):
     correlation_matrix = X.corr()
-    threshold = 0.8
+
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     correlation_matrix = pd.DataFrame(X_scaled, columns=X.columns).corr()
-    threshold = 0.8
+
     high_corr_pairs = np.where((correlation_matrix.abs() > threshold) & (correlation_matrix != 1))
     high_corr_features = set()
 
