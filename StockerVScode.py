@@ -1,30 +1,23 @@
 import pandas as pd
 import numpy as np
-import random
+from intoSQL import toMySQL 
+from datetime import datetime
+from datetime import timedelta
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import KFold
 import yfinance as yf
 import time
-
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix, roc_auc_score
-from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.ensemble import RandomForestClassifier
-
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from tpot import TPOTClassifier
 from sklearn.pipeline import make_pipeline
 import warnings
-
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
 from ManualEarnings import getEarnings
-
 from Collinearity import remove_HighCorrelation
+
 st =  time.time()
 import gc
+VersionNo = '18'
 
 ticker_list_SG = ['BN4.SI', 'A17U.SI', 'C38U.SI', 'C09.SI', 'D05.SI', 'G13.SI', 'H78.SI', 'J36.SI', 'BN4.SI', 
                   'ME8U.SI', 'M44U.SI', 'S58.SI', 'U96.SI', 'C6L.SI','Z74.SI', 'S68.SI', 'S63.SI', 'Y92.SI', 
@@ -81,12 +74,12 @@ confu_level= 0.7
 confi_level = 0
 roc_level = 0.7
 min_num = 2
-max_num = 8
+max_num = 3
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'Logs\12-16-24NEW.txt'
+filepath = r'Logs\12-23-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-for tick in ['NVDA', 'AVGO']:
+for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
     try:
         stock = yf.Ticker(tick)
         #analyst ratings
@@ -348,18 +341,37 @@ for tick in ['NVDA', 'AVGO']:
             score_dict['date'] = z.index
             score_dict['k_val'] = K
             dict_list.append(score_dict)
+        
         with open(filepath, 'a') as file:
             for i in range(len(dict_list)):
                 scores = dict_list[i]
                 mp_tut = {1: 'Long', 0: 'Short'}
                 n_predictions = len(scores['Prediction'])
                 print(f"{tick}: For K = {scores['k_val']},prediction: {scores['Prediction']}, Confidence {scores['Train_score']}, / {scores['Test_score']}, Prices = {list(round(df_new_p.iloc[-(scores['k_val']):]['Adj Close'], 3))} Shape: {input_shapes}, [0:{scores['0']}, 1:{scores['1']}], AUC_ROC: {scores['ROC']}")
+
                 for j in range(len(scores['Prediction'])):
+                    guessDate = df_new_p.index[-(len(scores['Prediction']) - j)]
+                    log_data = (tick, #Symbol
+                                guessDate.strftime('%Y-%m-%d'),  #Date of Guess
+                                df_new_p.iloc[-(n_predictions - j)]['Adj Close'], #Price of Guess
+                                scores['k_val'], #N weeks to results
+                                mp_tut[scores['Prediction'][j]], #Prediction: "Long/Short"
+                                (guessDate + timedelta(weeks = scores['k_val'])).strftime('%Y-%m-%d'), #Date of Result
+                                scores['Train_score'], #Train Score
+                                scores['Test_score'], #Test Score
+                                scores[str(scores['Prediction'][j])], #ConfusionMatrix Score
+                                scores['ROC'], #Auc_ROC Score
+                                VersionNo #predictor_version
+                                )
+                    toMySQL(log_data)
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
+                        
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{scores['k_val']}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
-    except Exception as e:
+        print(f"logged {tick}")
+    except IndexError as e:
         print(f"{tick} Fail due to {e}")
         failed.append(tick)
+
 print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
 et = time.time()
 print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
