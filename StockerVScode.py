@@ -14,10 +14,10 @@ import warnings
 from dateutil.relativedelta import relativedelta
 from ManualEarnings import getEarnings
 from Collinearity import remove_HighCorrelation
-
+from calculations import Cal
 st =  time.time()
 import gc
-VersionNo = '18'
+
 
 ticker_list_SG = ['BN4.SI', 'A17U.SI', 'C38U.SI', 'C09.SI', 'D05.SI', 'G13.SI', 'H78.SI', 'J36.SI', 'BN4.SI', 
                   'ME8U.SI', 'M44U.SI', 'S58.SI', 'U96.SI', 'C6L.SI','Z74.SI', 'S68.SI', 'S63.SI', 'Y92.SI', 
@@ -54,7 +54,7 @@ sp500_tickers = ['AAPL','NVDA','MSFT','AMZN','GOOG','GOOGL','META','TSLA','AVGO'
                  'SWK','CPT','CAG','UHS','CPB','JKHY','TAP','CHRW','SJM','DAY','ALB','ALLE','NCLH','JNPR','SOLV',
                  'TECH','BG','EMN','AIZ','BEN','CTLT','LW','MGM','IPG','GNRC','AOS','PNW','WYNN','LKQ','CRL','FRT',
                  'ENPH','AES','HAS','HSIC','MKTX','GL','TFX','MTCH','MHK','MOS','IVZ','CZR','APA','PARA','CE','WBA',
-                 'BWA','HII','FMC','QRVO','AMTM','BRK.B','BF.B']
+                 'BWA','HII','FMC','QRVO','AMTM']
 sp500 = yf.download(sp500_tickers,period = '62mo', interval = "1wk", )
 vix = yf.Ticker('^VIX').history(period = '62mo',interval = "1wk",  )
 sp500.drop(["Open", "High", "Low", "Close", "Volume"], axis = 1, inplace = True)
@@ -65,7 +65,7 @@ sp500_daily_change = sp500_pct.mean(axis = 1)
 
  
 cores = 3
-min_num = 1
+
 ticker_list =   []
 #'CDW', 'VLO','PG','PH','HD','TDG'
 #BEST: 'XOM', 'GE' 
@@ -73,13 +73,15 @@ failed = []
 confu_level= 0.7
 confi_level = 0
 roc_level = 0.7
-min_num = 2
-max_num = 3
+# k_min = 2
+# k_max = 3
+VersionNo = '18'
 mp_tut = {0: 'Short', 1: 'Long'}
 filepath = r'Logs\12-23-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
+def get_prediction(tick, k_min = 2, k_max = 8):
+# for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
     try:
         stock = yf.Ticker(tick)
         #analyst ratings
@@ -135,18 +137,18 @@ for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
         anal_sent = anal_sent.drop_duplicates('Month', keep = 'last').reset_index(drop = True)
 
         #Earnings scraper
-        try:
-            earnings = stock.get_earnings_dates(limit = 26)
-            earnings.index = earnings.index.strftime('%Y-%m-%d')
-            earnings = earnings['Reported EPS'].dropna()
-        except:
-            earnings = getEarnings(tick)
+        # try:
+        #     earnings = stock.get_earnings_dates(limit = 26)
+        #     earnings.index = earnings.index.strftime('%Y-%m-%d')
+        #     earnings = earnings['Reported EPS'].dropna()
+        # except:
+        #     earnings = getEarnings(tick) for now
         
         
         
         dict_list = []
         
-        for K in range(min_num,max_num + 1, 2): #iterates through each num of weeks for ticker, from min_num to max_num inclusive, week n with n + K
+        for K in range(k_min,k_max + 1, 2): #iterates through each num of weeks for ticker, from k_min to k_max inclusive, week n with n + K
             data_new = stock.history(period = '31mo', interval ='1wk', auto_adjust = False)
             data_old = stock.history(period = '62mo', interval ='1wk', auto_adjust = False)
             encoder = OneHotEncoder(drop = 'first', sparse_output = False)
@@ -164,100 +166,7 @@ for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
             df_new_p = Prep(data_new, old = False).copy()
             df_old_p = Prep(data_old, old = True).copy()
             
-            def Cal(data3):
-                data3['Dividends'] = data3['Dividends']/data3['Adj Close']
-                df = data3.copy()
-                #Volatility
-                df['volatility'] = df['Adj Close'].rolling(window = 12, min_periods = 12).std()
-                
-
-                #BOV
-                dof = np.sign(df['Adj Close'] - df['Adj Close'].shift(1))
-                Vol_Change = (df['Volume'] * dof)
-                bov = Vol_Change.cumsum()
-                df['BOV'] = bov.pct_change()
-
-
-                Low_60 = df['Adj Close'].rolling(window = 60, min_periods = 60).min()
-                High_60 = df['Adj Close'].rolling(window = 60, min_periods = 60).max()
-                Dif = High_60 - Low_60
-                def Low_cal(k):
-                    arr = Low_60 + (Dif * k)
-                    Parr = (df['Adj Close']/arr) -1
-                    return Parr
-                def High_cal(j):
-                    arr = High_60 - (Dif * j)
-                    Parr = (df['Adj Close']/arr) -1
-                    return Parr
-                
-                #Fibonnaci
-                df['SF2'] = Low_cal(0.5)
-                df['SF4'] = Low_cal(0.786)
-                df['RC1'] = High_cal(0.786)
-                
-                #Boolinger
-                df['SMA'] = df['Adj Close'].rolling(window = 20, min_periods = 20).mean()
-                df['STD'] = df['Adj Close'].rolling(window = 20, min_periods = 20).std()
-                df['LBol'] = df['SMA'] - (2* df['STD'])
-                df['HBol'] = df['SMA'] + (2* df['STD'])
-                df['PLbol'] = ((df['Adj Close'] - df['LBol']) / df['LBol']) 
-                df['PHbol'] = ((df['Adj Close'] - df['HBol']) / df['HBol'])
-                df.drop(['LBol','HBol','STD','SMA'], inplace = True, axis = 1)
-                high_prices = df['High']
-                close_prices = df['Adj Close']
-                low_prices = df['Low']
-
-                nine_period_high =  df['High'].rolling(window=9).max()
-                nine_period_low = df['Low'].rolling(window=9).min()
-                tenkan_sen = (nine_period_high + nine_period_low) /2
-
-                period26_high = high_prices.rolling(window=26).max()
-                period26_low = low_prices.rolling(window=26).min()
-                kijun_sen = (period26_high + period26_low) / 2
-
-                senkou_span_a = ((tenkan_sen + kijun_sen) / 2).shift(26)
-
-                period52_high = high_prices.rolling(window=52).max()
-                period52_low = low_prices.rolling(window=52).min()
-                senkou_span_b = ((period52_high + period52_low) / 2).shift(26)
-
-                df['kumo'] = senkou_span_a - senkou_span_b
-                df['kijun_tenkan'] = tenkan_sen - kijun_sen
-                ema12 = df['Adj Close'].ewm(span = 12,adjust=False, min_periods = 12).mean()
-                ema26 = df['Adj Close'].ewm(span = 26,adjust=False, min_periods = 26).mean()
-                MACD = ema12 - ema26
-                df['MACD'] = MACD
-                ema9 = df['MACD'].ewm(span = 9,adjust=False, min_periods = 9).mean()
-                df['ema9'] = ema9
-                df['MACD_Histogram'] = MACD - ema9
-                df['MACD_grad'] = df['MACD'] - df['MACD'].shift(1)
-                df['ema9_grad'] = df['ema9'] - df['ema9'].shift(1)
-                cup = df['Adj Close'].diff().copy()
-                cdown = df['Adj Close'].diff().copy()
-                cup[cup < 0] = 0
-                cdown[cdown > 0] = 0
-                cup_sum = cup.rolling(14, min_periods = 14).sum()
-                cdown_sum = cdown.rolling(14, min_periods = 14).sum() 
-                rsi_cal = cup_sum / (cdown_sum * -1)
-                RSI = 100 - (100/(1 + rsi_cal))
-                df['RSI'] = RSI
-                def wwma(values, n):
-                    return values.ewm(alpha=1/n, adjust=False).mean()
-
-                def atr(df, n=14):
-                    data_work = df.copy()
-                    high = data_work['High']
-                    low = data_work['Low']
-                    close = data_work['Adj Close']
-                    data_work['tr0'] = abs(high - low)
-                    data_work['tr1'] = abs(high - close.shift())
-                    data_work['tr2'] = abs(low - close.shift())
-                    tr = data_work[['tr0', 'tr1', 'tr2']].max(axis=1)
-                    atr = wwma(tr, n)
-                    return atr
-                df['atr'] = atr(df, 14)
-                
-                return df
+            
             df = pd.concat([Cal(df_old_p), Cal(df_new_p)])
             def target_variable(df):
                 direc = df['Adj Close'].shift(-K) - df['Adj Close']
@@ -271,10 +180,10 @@ for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
             df['Month'] = df.index.strftime('%Y-%m')
             df.index = df.index.strftime('%Y-%m-%d')
             index_holder = df.index
-            df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
-            df['Reported EPS'] = df['Reported EPS'].ffill()
+            # df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
+            # df['Reported EPS'] = df['Reported EPS'].ffill()
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
-            df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"]
+            # df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"] for now
  
             df = pd.merge(df, anal_sent, on = 'Month', how = 'left').drop('Month', axis = 1)
             df.index = index_holder
@@ -363,7 +272,7 @@ for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
                                 scores['ROC'], #Auc_ROC Score
                                 VersionNo #predictor_version
                                 )
-                    toMySQL(log_data)
+                    # toMySQL(log_data) fornow
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
                         
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{scores['k_val']}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
@@ -372,7 +281,9 @@ for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
         print(f"{tick} Fail due to {e}")
         failed.append(tick)
 
-print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
-et = time.time()
-print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
-print(failed) 
+# print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
+# et = time.time()
+# print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
+# print(failed) 
+if (__name__ == '__main__'):
+    get_prediction('NVDA', 2, 2)
