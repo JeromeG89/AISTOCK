@@ -77,10 +77,10 @@ roc_level = 0.7
 # k_max = 3
 VersionNo = '18'
 mp_tut = {0: 'Short', 1: 'Long'}
-filepath = r'Logs\12-23-24.txt'
+# logpath = r'Logs\12-23-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-def get_prediction(tick, k_min = 2, k_max = 8):
+def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
 # for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
     try:
         stock = yf.Ticker(tick)
@@ -251,7 +251,7 @@ def get_prediction(tick, k_min = 2, k_max = 8):
             score_dict['k_val'] = K
             dict_list.append(score_dict)
         
-        with open(filepath, 'a') as file:
+        with open(logpath, 'a') as file:
             for i in range(len(dict_list)):
                 scores = dict_list[i]
                 mp_tut = {1: 'Long', 0: 'Short'}
