@@ -137,12 +137,12 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
         anal_sent = anal_sent.drop_duplicates('Month', keep = 'last').reset_index(drop = True)
 
         #Earnings scraper
-        # try:
-        #     earnings = stock.get_earnings_dates(limit = 26)
-        #     earnings.index = earnings.index.strftime('%Y-%m-%d')
-        #     earnings = earnings['Reported EPS'].dropna()
-        # except:
-        #     earnings = getEarnings(tick) for now
+        try:
+            earnings = stock.get_earnings_dates(limit = 26)
+            earnings.index = earnings.index.strftime('%Y-%m-%d')
+            earnings = earnings['Reported EPS'].dropna()
+        except:
+            earnings = getEarnings(tick)
         
         
         
@@ -180,10 +180,10 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
             df['Month'] = df.index.strftime('%Y-%m')
             df.index = df.index.strftime('%Y-%m-%d')
             index_holder = df.index
-            # df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
-            # df['Reported EPS'] = df['Reported EPS'].ffill()
+            df = df.merge(earnings, how = 'outer', left_index = True, right_index = True)
+            df['Reported EPS'] = df['Reported EPS'].ffill()
             df.dropna(subset = ["Adj Close", "Volume"], inplace = True)
-            # df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"] for now
+            df["Reported EPS"]  = df["Adj Close"] / df["Reported EPS"] 
  
             df = pd.merge(df, anal_sent, on = 'Month', how = 'left').drop('Month', axis = 1)
             df.index = index_holder
@@ -272,18 +272,18 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
                                 scores['ROC'], #Auc_ROC Score
                                 VersionNo #predictor_version
                                 )
-                    # toMySQL(log_data) fornow
+                    toMySQL(log_data) 
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
                         
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{scores['k_val']}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
         print(f"logged {tick}")
-    except IndexError as e:
+    except Exception as e:
         print(f"{tick} Fail due to {e}")
         failed.append(tick)
 
 # print(list(df_new_p.iloc[-K:]['Adj Close'].index.date))
-# et = time.time()
-# print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
-# print(failed) 
+et = time.time()
+print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
+print(failed) 
 if (__name__ == '__main__'):
     get_prediction('NVDA', 2, 2)
