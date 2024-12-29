@@ -2,21 +2,21 @@ Outperform,2.0
 Strong Buy,2.0
 Overweight,2.0
 Positive,1.0
-Buy,1.0
+Buy,1.5
 Hold,0.0
-Sector Perform,0.5
-Market Perform,0.5
+Sector Perform,0.25
+Market Perform,0.25
 Neutral,0.0
 Sell,-1.0
 ,0.0
 Equal-Weight,0.0
-Peer Perform,0.5
+Peer Perform,0.0
 Sector Weight,0.0
-Underperform,-1.0
+Underperform,-1.5
 In-Line,0.0
-Underweight,-2.0
+Underweight,-1.5
 Perform,0.5
-Reduce,-0.5
+Reduce,-1.0
 Sector Outperform,2.0
 Market Outperform,2.0
 Mixed,0.0
@@ -24,13 +24,13 @@ Negative,-1.0
 Conviction Buy,2.0
 Strong Sell,-2.0
 Hold Neutral,0.0
-Accumulate,0.75
+Accumulate,1.0
 Action List Buy,2.0
 Outperformer,2.0
-Gradually Accumulate,0.5
+Gradually Accumulate,0.75
 Sector Underperform,-2.0
 Above Average,1.0
 Average,0.0
 Market Weight,0.0
 Top Pick,2.0
-Underperformer,-2.0
+Underperformer,-1.5
