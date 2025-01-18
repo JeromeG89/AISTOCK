@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
-from intoSQL import toMySQL 
+from intoSQL import toMySQL
 from datetime import datetime
 from datetime import timedelta
-from sklearn.model_selection import train_test_split
 import yfinance as yf
+from sklearn.model_selection import train_test_split
+
 import time
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix, roc_auc_score
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -64,7 +65,7 @@ sp500_pct[sp500_pct < 0] = -1
 sp500_daily_change = sp500_pct.mean(axis = 1)
 
  
-cores = 3
+cores = 2
 
 ticker_list =   []
 #'CDW', 'VLO','PG','PH','HD','TDG'
@@ -227,7 +228,10 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
             
             y_pred = tpot_pipeline.predict(X_test)
             score_dict = {}
-            roc_auc = roc_auc_score(y_test, y_pred)
+            try:
+                roc_auc = roc_auc_score(y_test, y_pred)
+            except:
+                roc_auc = 0
             score_dict['ROC'] = round(roc_auc, 3)
             tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
             if tp == 0:
@@ -272,9 +276,9 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
                                 scores['ROC'], #Auc_ROC Score
                                 VersionNo #predictor_version
                                 )
-                    toMySQL(log_data) 
+                    
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
-                        
+                        toMySQL(log_data) 
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{scores['k_val']}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
         print(f"logged {tick}")
     except Exception as e:
@@ -286,4 +290,5 @@ et = time.time()
 print(f"Time elapsed =  {round((et-st)/60,2)} Mins")
 print(failed) 
 if (__name__ == '__main__'):
-    get_prediction('NVDA', 2, 2)
+    # get_prediction('NVDA', 2, 2)
+    pass
