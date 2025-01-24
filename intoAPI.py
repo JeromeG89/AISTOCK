@@ -1,4 +1,4 @@
-from StockerVScode import get_prediction
+from main import get_prediction
 sp500_tickers = ['AAPL','NVDA','MSFT','AMZN','GOOG','GOOGL','META','TSLA','AVGO','WMT','LLY','JPM','V','ORCL',
                  'UNH','XOM','MA','COST','HD','PG','NFLX','JNJ','BAC','CRM','ABBV','TMUS','CVX','KO','MRK','WFC',
                  'ADBE','CSCO','NOW','BX','ACN','AMD','IBM','PEP','MCD','AXP','LIN','DIS','MS','PM','TMO','ABT',

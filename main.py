@@ -1,23 +1,25 @@
-import pandas as pd
-import numpy as np
-from intoSQL import toMySQL
-from datetime import datetime
-from datetime import timedelta
-import yfinance as yf
-from sklearn.model_selection import train_test_split
-
-import time
+from dateutil.relativedelta import relativedelta
+from Helpers.ManualEarnings import getEarnings
+from Helpers.Collinearity import remove_HighCorrelation
+from Helpers.calculations import Cal
+from sklearn.pipeline import make_pipeline
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix, roc_auc_score
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from tpot import TPOTClassifier
-from sklearn.pipeline import make_pipeline
+from Helpers.intoSQL import toMySQL
+from datetime import datetime
+from datetime import timedelta
+from sklearn.model_selection import train_test_split
+
+import pandas as pd
+import numpy as np
+import yfinance as yf
+import time
 import warnings
-from dateutil.relativedelta import relativedelta
-from ManualEarnings import getEarnings
-from Collinearity import remove_HighCorrelation
-from calculations import Cal
-st =  time.time()
 import gc
+
+st =  time.time()
+
 
 
 ticker_list_SG = ['BN4.SI', 'A17U.SI', 'C38U.SI', 'C09.SI', 'D05.SI', 'G13.SI', 'H78.SI', 'J36.SI', 'BN4.SI', 
@@ -86,7 +88,7 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
     try:
         stock = yf.Ticker(tick)
         #analyst ratings
-        file_path_sent = r'Analyst_sent.txt'
+        file_path_sent = r'Helpers/Analyst_sent.txt'
         analyst_mp = {}
         with open(file_path_sent,'r') as file: 
             for line in file:
