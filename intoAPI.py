@@ -36,4 +36,4 @@ import random
 random.shuffle(sp500_tickers)
 if(__name__ == '__main__'):
     for tick in sp500_tickers:
-        get_prediction(tick = tick, logpath= r'Logs\01-06-25.txt')    
+        get_prediction(tick = tick, logpath= r'Logs\01-20-25.txt')

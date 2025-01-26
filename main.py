@@ -1,4 +1,5 @@
 from dateutil.relativedelta import relativedelta
+from Helpers.intoSQL import toMySQL
 from Helpers.ManualEarnings import getEarnings
 from Helpers.Collinearity import remove_HighCorrelation
 from Helpers.calculations import Cal
@@ -6,9 +7,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix, roc_auc_score
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from tpot import TPOTClassifier
-from Helpers.intoSQL import toMySQL
-from datetime import datetime
-from datetime import timedelta
+
+from datetime import datetime, timedelta
 from sklearn.model_selection import train_test_split
 
 import pandas as pd
@@ -83,7 +83,7 @@ mp_tut = {0: 'Short', 1: 'Long'}
 # logpath = r'Logs\12-23-24.txt'
 oldest_date = (datetime.today()+ relativedelta(months=-62)).strftime('%Y-%m-%d')
 
-def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
+def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\Temp.txt'):
 # for tick in ['NVDA', 'FI', 'AVGO'] + sp500_tickers:
     try:
         stock = yf.Ticker(tick)
@@ -280,11 +280,9 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\12-23-24.txt'):
                                 )
                     
                     if scores['Test_score'] >= confi_level and scores[str(scores['Prediction'][j])] >= confu_level and scores['ROC'] >= roc_level: 
-                        try:
-                            toMySQL(log_data) 
-                        except:
-                            print("SQL integration failed")
+                        toMySQL(log_data) 
                         file.write(f"{tick}, {df_new_p.index[-(n_predictions - j)].month}/{df_new_p.index[-(n_predictions - j)].day}/{df_new_p.index[-(n_predictions - j)].year}, ,{scores['k_val']}, {mp_tut[scores['Prediction'][j]]}, , , , {scores['Train_score']}, {scores['Test_score']}, , {scores[str(scores['Prediction'][j])]}, {scores['ROC']}\n")
+        
         print(f"logged {tick}")
     except Exception as e:
         print(f"{tick} Fail due to {e}")
