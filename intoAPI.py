@@ -35,12 +35,11 @@ sp500_tickers = ['AAPL','NVDA','MSFT','AMZN','GOOG','GOOGL','META','TSLA','AVGO'
 
 import random
 # random.shuffle(sp500_tickers)
-count = sp500_tickers.index('SPGI') + 1
+count = 0 #sp500_tickers.index('SPGI') + 1
 if(__name__ == '__main__'):
-
-    for tick in [ 'HST' , 'BR' , 'MA' , 'ALB' , 'IT' , 'BSX' , 'CTRA' , 'KR' , 'MCK' , 'JNPR' , 'PKG' , 'META' , 'RVTY' , 'IPG' , 'PANW' , 'IP' , 'MMM' , 'MSFT' , 'BEN' , 'PFG' , 'CVX' , 'XOM' , 'GE' , 'ABT' , 'TER' , 'FI' , 'VST' , 'PFE' , 'AMCR' , 'UAL' , 'HON' , 'WRB' , 'SNA' , 'BWA' , 'CZR' , 'KKR' , 'AMD' , 'TMO' , 'CAT' , 'LOW' , 'DE' , 'C' , 'MU' , 'PG' , 'WFC' , 'APTV' , 'ODFL' , 'HES' , 'FTV' , 'JCI' , 'JBHT' , 'EMR' , 'EVRG' , 'AMZN' , 'BAC' , 'PAYC' , 'SPG' , 'KMI' , 'QRVO' , 'AMP' , 'BXP' , 'GL' , 'OTIS' , 'MGM' , 'WM' , 'RMD' , 'GNRC' , 'JNJ' , 'ACN' , 'PARA' , 'ANET' , 'V' , 'AXP' , 'GD' , 'JPM' , 'VZ' , 'CRM' , 'FIS' , 'LRCX' , 'MSI' , 'CMG' , 'ANSS' , 'DOV' ] + sp500_tickers[count:]:
-        get_prediction(tick = tick, logpath= r'Logs\2025-03-03.txt')
+    for tick in ['NVDA', 'AAPL'] + sp500_tickers:
         print(count)
+        get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\2025-03-10.txt')
         # count += 1
         
         

@@ -145,6 +145,7 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\Temp.txt'):
             earnings = stock.get_earnings_dates(limit = 26)
             earnings.index = earnings.index.strftime('%Y-%m-%d')
             earnings = earnings['Reported EPS'].dropna()
+            print('work')
         except:
             earnings = getEarnings(tick)
         
@@ -162,7 +163,7 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\Temp.txt'):
                 if old == True:
                     df = data_old.loc[:(data_new.index[0]-timedelta(weeks=1))]
                 # print(df)
-                df.loc[:, 'Month'] = df.index.month
+                df['Month'] = df.index.month
                 encoded_months = encoder.fit_transform(df[['Month']])
                 encoded_months_df = pd.DataFrame(encoded_months, columns= encoder.get_feature_names_out(['Month']))
                 encoded_months_df.index = df.index
