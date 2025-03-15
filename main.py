@@ -60,6 +60,7 @@ sp500_tickers = ['AAPL','NVDA','MSFT','AMZN','GOOG','GOOGL','META','TSLA','AVGO'
                  'BWA','HII','FMC','QRVO','AMTM']
 sp500 = yf.download(sp500_tickers,period = '62mo', interval = "1wk", )
 vix = yf.Ticker('^VIX').history(period = '62mo',interval = "1wk",  )
+
 sp500.drop(["Open", "High", "Low", "Close", "Volume"], axis = 1, inplace = True)
 sp500_pct = sp500.pct_change().fillna(0)
 sp500_pct[sp500_pct > 0] = 1
@@ -67,7 +68,7 @@ sp500_pct[sp500_pct < 0] = -1
 sp500_daily_change = sp500_pct.mean(axis = 1)
 
  
-cores = 2
+cores = 3
 
 ticker_list =   []
 #'CDW', 'VLO','PG','PH','HD','TDG'
@@ -159,8 +160,9 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\Temp.txt'):
                 df = df.drop('Close', axis = 1, inplace = False)
                 df['Dividends'] = df['Dividends']/df['Adj Close']
                 if old == True:
-                    df = df.loc[~df.index.isin(data_new.index)]
-                df['Month'] = df.index.month
+                    df = data_old.loc[:(data_new.index[0]-timedelta(weeks=1))]
+                # print(df)
+                df.loc[:, 'Month'] = df.index.month
                 encoded_months = encoder.fit_transform(df[['Month']])
                 encoded_months_df = pd.DataFrame(encoded_months, columns= encoder.get_feature_names_out(['Month']))
                 encoded_months_df.index = df.index
@@ -168,15 +170,16 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\Temp.txt'):
                 return df
             df_new_p = Prep(data_new, old = False).copy()
             df_old_p = Prep(data_old, old = True).copy()
-            
+
             
             df = pd.concat([Cal(df_old_p), Cal(df_new_p)])
+            # print(df)
             def target_variable(df):
                 direc = df['Adj Close'].shift(-K) - df['Adj Close']
                 direc = direc.astype(object)
                 direc[direc > 0] = 1
                 direc[direc < 0] = 0
-                direc[direc.isna()] = 'insf'
+                direc[direc.isna()] = -1
                 return direc
             
             df['dir'] = target_variable(df)    
@@ -201,23 +204,22 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\Temp.txt'):
             else:
                 sp500_daily_change.index = df.index
                 df["Feels_goodline"] = sp500_daily_change
-
             df['vix'] = vix.iloc[-len(df):]['Close'].values
 
-            #print(df) #For debugging
+            # print(df) #For debugging
             
-            df.drop(['Open','High','Low', 'Volume', 'Adj Close'], axis = 1, inplace = True)
+            df.drop(['Open','High','Low', 'Volume', 'Close'], axis = 1, inplace = True)
+            
             df.dropna(inplace = True)
-
-            df_y = df['dir']
-            df = remove_HighCorrelation(df.drop(['dir'], axis = 1), 0.7)
+       
+            df_y = df['dir'].copy()
+            df.drop(['dir'], axis = 1, inplace = True)
+            df = remove_HighCorrelation(df, 0.7)
             df =  df.join(df_y)
-
-            z = df[df['dir'] == 'insf'].copy()
+            z = df[df_y == -1].copy()
+            df = df.loc[df['dir'] != -1]
             z.drop(['dir'], inplace= True, axis = 1)
-            
-            df.drop(index = z.index, inplace = True, axis = 0)
-            y = df['dir']
+            y = df_y.loc[df_y != -1]
             y = y.astype('int')
             X = df.drop(['dir'], axis = 1)
             
@@ -235,6 +237,7 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\Temp.txt'):
             except:
                 roc_auc = 0
             score_dict['ROC'] = round(roc_auc, 3)
+            
             tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
             if tp == 0:
                 tp_rate = 0
@@ -252,6 +255,7 @@ def get_prediction(tick, k_min = 2, k_max = 8, logpath= r'Logs\Temp.txt'):
 
             score_dict['1'] = round(tp_rate, 3)
             score_dict['0'] = round(tn_rate, 3)
+            
             score_dict['Prediction'] = tpot_pipeline.predict(z)
             score_dict['date'] = z.index
             score_dict['k_val'] = K
