@@ -30,10 +30,10 @@ Install the required Python dependencies using `pip`:
 pip install -r requirements.txt
 ```
 
-### 4. **Set Up the Database**
+### 4. **Set Up the Database (OPTIONAL)**
 The `schema.sql` file contains the database schema required for the application. Initialize the database by running:
 ```bash
-sqlite3 database.db < schema.sql
+mysql -u root -p stock_logs < schema.sql
 ```
 
 This creates the required tables in `database.db`.
